@@ -9,8 +9,15 @@ edition = "2021"
 name = "import"
 path = "src/bin/import.rs"
 
+[[bin]]
+name = "download_timetable"
+path = "src/bin/download_timetable.rs"
 
 [dependencies]
 csv = "1.2.1"
 diesel = { version = "2.0.3", features = ["postgres"] }
 dotenvy = "0.15"
+reqwest = "0.11.16"
+serde = { verison = "1.0.159", features = ["derive"] }
+serde-xml-rs = "0.6.0"
+tokio = { version = "1", features = ["full"] }

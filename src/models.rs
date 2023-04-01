@@ -10,6 +10,7 @@ pub struct Quay {
     pub name: String,
     pub lat: f64,
     pub lon: f64,
+    pub stop_id: i32,
 }
 
 #[derive(Queryable, Insertable)]

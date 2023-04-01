@@ -6,6 +6,7 @@ diesel::table! {
         name -> Text,
         lat -> Float8,
         lon -> Float8,
+        stop_id -> Nullable<Int4>,
     }
 }
 
@@ -17,6 +18,8 @@ diesel::table! {
         lon -> Float8,
     }
 }
+
+diesel::joinable!(quays -> stops (stop_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     quays,

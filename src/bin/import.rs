@@ -4,6 +4,13 @@ use dotenvy::dotenv;
 use std::env;
 use buss2::models::{Quay, Stop};
 
+fn main() {
+    let mut connection = establish_connection();
+
+    println!("Import");
+    import_stops(&mut connection);
+    import_quays(&mut connection);
+}
 
 pub fn establish_connection() -> PgConnection {
     dotenv().ok();
@@ -13,37 +20,24 @@ pub fn establish_connection() -> PgConnection {
         .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
 }
 
-fn main() {
-    let mut connection = establish_connection();
-
-    println!("Import");
+fn read_stops_file() -> csv::Reader<std::fs::File> {
     let dir = "/home/olav/Downloads/rb_akt-aggregated-gtfs(1)/stops.txt";
+    return csv::Reader::from_path(dir).unwrap();
+}
 
-    let mut rdr = csv::Reader::from_path(dir).unwrap();
+fn get_last_as_i32(value: &str) -> i32 {
+    return value.split(':').last().unwrap().parse().unwrap();
+}
+
+fn import_stops(connection: &mut PgConnection) {
+    let mut rdr = read_stops_file();
     for result in rdr.records() {
         let record = result.unwrap();
-
         let id_str = record[0].to_string();
         if id_str.starts_with("NSR:StopPlace") {
-            use buss2::schema::quays::dsl::*;
-            let quay = Quay {
-                id: id_str.split(':').last().unwrap().parse().unwrap(),
-                name: record[1].to_string(),
-                lat: record[2].parse().unwrap(),
-                lon: record[3].parse().unwrap(),
-            };
-
-            println!("{:?}", quay);
-
-            diesel::insert_into(quays)
-                .values(&quay)
-                .on_conflict_do_nothing()
-                .execute(&mut connection)
-                .expect("Error saving quay.");
-        } else if id_str.starts_with("NSR:StopPlace") {
             use buss2::schema::stops::dsl::*;
             let stop = Stop {
-                id: id_str.split(':').last().unwrap().parse().unwrap(),
+                id: get_last_as_i32(&id_str),
                 name: record[1].to_string(),
                 lat: record[2].parse().unwrap(),
                 lon: record[3].parse().unwrap(),
@@ -54,8 +48,34 @@ fn main() {
             diesel::insert_into(stops)
                 .values(&stop)
                 .on_conflict_do_nothing()
-                .execute(&mut connection)
+                .execute(connection)
                 .expect("Error saving stop.");
+        }
+    }
+}
+
+fn import_quays(connection: &mut PgConnection) {
+    let mut rdr = read_stops_file();
+    for result in rdr.records() {
+        let record = result.unwrap();
+        let id_str = record[0].to_string();
+        if id_str.starts_with("NSR:Quay") {
+            use buss2::schema::quays::dsl::*;
+            let quay = Quay {
+                id: get_last_as_i32(&id_str),
+                name: record[1].to_string(),
+                lat: record[2].parse().unwrap(),
+                lon: record[3].parse().unwrap(),
+                stop_id: get_last_as_i32(&record[6]),
+            };
+
+            println!("{:?}", quay);
+
+            diesel::insert_into(quays)
+                .values(&quay)
+                .on_conflict_do_nothing()
+                .execute(connection)
+                .expect("Error saving quay.");
         }
     }
 }

@@ -39,7 +39,7 @@ diesel::table! {
         name -> Text,
         lat -> Float8,
         lon -> Float8,
-        stop_id -> Nullable<Int4>,
+        stop_id -> Int4,
     }
 }
 

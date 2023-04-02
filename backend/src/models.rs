@@ -6,8 +6,9 @@ use crate::schema::journeys;
 use crate::schema::estimated_calls;
 use chrono::{DateTime, Utc};
 use diesel::{AsExpression, FromSqlRow};
+use serde::Serialize;
 
-#[derive(Queryable, Insertable)]
+#[derive(Queryable, Insertable, Serialize)]
 #[diesel(table_name = quays)]
 #[derive(Debug)]
 pub struct Quay {
@@ -18,7 +19,7 @@ pub struct Quay {
     pub stop_id: i32,
 }
 
-#[derive(Queryable, Insertable)]
+#[derive(Queryable, Insertable, Serialize)]
 #[diesel(table_name = stops)]
 #[derive(Debug)]
 pub struct Stop {

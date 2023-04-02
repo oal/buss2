@@ -1,55 +1,39 @@
-use std::fs::File;
-use std::io::{Read, Write};
-use diesel::prelude::*;
-use buss2::models::{NewEstimatedCall, NewJourney, Stop};
-use reqwest;
-use serde::{Deserialize, Serialize};
-use serde_xml_rs;
-use buss2::db::establish_connection;
-use buss2::helpers::get_last_as_i32;
 use chrono::{DateTime, Utc};
+use diesel::{PgConnection, RunQueryDsl};
+use anyhow::Result;
+use serde::{Deserialize, Serialize};
+use crate::helpers::get_last_as_i32;
+use crate::models::{NewEstimatedCall, NewJourney};
 
-#[tokio::main]
-async fn main() {
-// Download and parse XML
-//     let body = load_estimated_timetables("buss2").await;
-    let mut file = File::open("akt.xml").unwrap();
-    let mut body = String::new();
-    file.read_to_string(&mut body).unwrap();
-
+pub async fn sync_timetables(requestor_id: &str, mut connection: &mut PgConnection) {
+    println!("Syncing timetables... (requestor_id: {})", requestor_id);
+    let body = load_estimated_timetables(requestor_id).await;
     let siri: Siri = serde_xml_rs::from_str(&body).unwrap();
-
-
-    let mut connection = establish_connection();
     insert_journeys(siri, &mut connection);
+}
 
-    // // Write body to file
-    // let mut file = File::create("akt.xml").unwrap();
-    // file.write_all(body.as_bytes()).unwrap();
-
-
-    // let stops: Vec<Stop> = serde_xml_rs::from_str(&body).unwrap();
-    // println!("{:?}", stops);
+async fn load_estimated_timetables(requestor_id: &str) -> String {
+    let url = "https://api.entur.io/realtime/v1/rest/et?datasetId=AKT&requestorId=".to_string() + requestor_id;
+    let mut response = reqwest::get(url).await.unwrap();
+    let body = response.text().await.unwrap().to_string();
+    body
 }
 
 fn insert_journeys(siri: Siri, mut connection: &mut PgConnection) {
     for journey in siri.service_delivery.estimated_time_table_delivery.estimated_journey_version_frame.estimated_vehicle_journey {
-        println!("{:?}", journey);
-
-        let journey_id = insert_journey(&journey, &mut connection);
-        insert_estimated_calls(journey_id, &journey.estimated_calls.estimated_call, &mut connection);
+        if let Ok(journey_id) = insert_journey(&journey, &mut connection) {
+            insert_estimated_calls(journey_id, &journey.estimated_calls.estimated_call, &mut connection);
+        }
     }
 }
 
-fn insert_journey(journey: &EstimatedVehicleJourney, mut connection: &mut PgConnection) -> i32 {
-    use buss2::schema::journeys::dsl::*;
+fn insert_journey(journey: &EstimatedVehicleJourney, mut connection: &mut PgConnection) -> Result<i32> {
+    use crate::schema::journeys::dsl::*;
     let journey_ref_str = &journey.dated_vehicle_journey_ref;
     let journey = NewJourney {
         route_id: get_last_as_i32(&journey.line_ref),
         journey_ref: journey_ref_str.to_string(),
     };
-
-    println!("{:?}", journey);
 
     let result: (i32, Option<i32>, String) = diesel::insert_into(journeys)
         .values(&journey)
@@ -57,20 +41,14 @@ fn insert_journey(journey: &EstimatedVehicleJourney, mut connection: &mut PgConn
         .do_update()
         .set(&journey)
         .get_result(connection)
-        .expect("Error saving stop.");
+        .expect("Error saving journey.");
 
-    return result.0;
+    return Ok(result.0);
 }
 
-fn parse_time(time: &Option<String>) -> Option<DateTime<Utc>> {
-    match time {
-        Some(time) => Some(DateTime::parse_from_rfc3339(time).unwrap().with_timezone(&Utc)),
-        _ => None,
-    }
-}
 
 fn insert_estimated_calls(internal_id: i32, calls: &Vec<EstimatedCall>, mut connection: &mut PgConnection) {
-    use buss2::schema::estimated_calls::dsl::*;
+    use crate::schema::estimated_calls::dsl::*;
     for call in calls {
         let estimated_call = NewEstimatedCall {
             journey_id: internal_id,
@@ -85,8 +63,6 @@ fn insert_estimated_calls(internal_id: i32, calls: &Vec<EstimatedCall>, mut conn
             expected_departure_time: parse_time(&call.expected_departure_time),
         };
 
-        println!("{:?}", estimated_call);
-
         diesel::insert_into(estimated_calls)
             .values(&estimated_call)
             .on_conflict((journey_id, order_in_journey))
@@ -94,6 +70,19 @@ fn insert_estimated_calls(internal_id: i32, calls: &Vec<EstimatedCall>, mut conn
             .set(&estimated_call)
             .execute(connection)
             .expect("Error saving stop.");
+    }
+}
+
+fn parse_time(time: &Option<String>) -> Option<DateTime<Utc>> {
+    match time {
+        Some(time) => {
+            if let Ok(parsed_time) = DateTime::parse_from_rfc3339(time) {
+                Some(parsed_time.with_timezone(&Utc))
+            } else {
+                None
+            }
+        }
+        _ => None,
     }
 }
 
@@ -147,9 +136,3 @@ struct EstimatedCall {
     expected_departure_time: Option<String>,
 }
 
-async fn load_estimated_timetables(requestor_id: &str) -> String {
-    let url = "https://api.entur.io/realtime/v1/rest/et?datasetId=AKT&requestorId=".to_string() + requestor_id;
-    let mut response = reqwest::get(url).await.unwrap();
-    let body = response.text().await.unwrap().to_string();
-    body
-}

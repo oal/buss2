@@ -6,6 +6,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [[bin]]
+name = "serve"
+path = "src/bin/serve.rs"
+
+[[bin]]
 name = "import"
 path = "src/bin/import.rs"
 
@@ -22,3 +26,5 @@ reqwest = "0.11.16"
 serde = { verison = "1.0.159", features = ["derive"] }
 serde-xml-rs = "0.6.0"
 tokio = { version = "1", features = ["full"] }
+anyhow = "1.0.70"
+axum = "0.6.12"

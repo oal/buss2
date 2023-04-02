@@ -8,9 +8,9 @@ use chrono::{DateTime, Utc};
 use diesel::{AsExpression, FromSqlRow};
 use serde::Serialize;
 
-#[derive(Queryable, Insertable, Serialize)]
+#[derive(Queryable, Insertable, Identifiable, Associations, Serialize, Debug)]
 #[diesel(table_name = quays)]
-#[derive(Debug)]
+#[diesel(belongs_to(Stop))]
 pub struct Quay {
     pub id: i32,
     pub name: String,
@@ -19,9 +19,8 @@ pub struct Quay {
     pub stop_id: i32,
 }
 
-#[derive(Queryable, Insertable, Serialize)]
+#[derive(Queryable, Insertable, Identifiable, Selectable, Serialize, Debug)]
 #[diesel(table_name = stops)]
-#[derive(Debug)]
 pub struct Stop {
     pub id: i32,
     pub name: String,
@@ -29,9 +28,8 @@ pub struct Stop {
     pub lon: f64,
 }
 
-#[derive(Queryable, Insertable)]
+#[derive(Queryable, Insertable, Debug)]
 #[diesel(table_name = routes)]
-#[derive(Debug)]
 pub struct Route {
     pub id: i32,
     pub short_name: String,

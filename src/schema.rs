@@ -1,5 +1,11 @@
 // @generated automatically by Diesel CLI.
 
+pub mod sql_types {
+    #[derive(diesel::sql_types::SqlType)]
+    #[diesel(postgres_type(name = "direction_enum"))]
+    pub struct DirectionEnum;
+}
+
 diesel::table! {
     estimated_calls (id) {
         id -> Int4,
@@ -16,10 +22,14 @@ diesel::table! {
 }
 
 diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::DirectionEnum;
+
     journeys (id) {
         id -> Int4,
         route_id -> Nullable<Int4>,
         journey_ref -> Text,
+        direction -> DirectionEnum,
     }
 }
 

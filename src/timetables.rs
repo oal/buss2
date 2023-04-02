@@ -3,7 +3,7 @@ use diesel::{PgConnection, RunQueryDsl};
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use crate::helpers::get_last_as_i32;
-use crate::models::{NewEstimatedCall, NewJourney};
+use crate::models::{Direction, NewEstimatedCall, NewJourney};
 
 pub async fn sync_timetables(requestor_id: &str, mut connection: &mut PgConnection) {
     println!("Syncing timetables... (requestor_id: {})", requestor_id);
@@ -33,9 +33,14 @@ fn insert_journey(journey: &EstimatedVehicleJourney, mut connection: &mut PgConn
     let journey = NewJourney {
         route_id: get_last_as_i32(&journey.line_ref),
         journey_ref: journey_ref_str.to_string(),
+        direction: if journey.direction_ref == "Outbound" {
+            Direction::Outbound
+        } else {
+            Direction::Inbound
+        },
     };
 
-    let result: (i32, Option<i32>, String) = diesel::insert_into(journeys)
+    let result: (i32, Option<i32>, String, Direction) = diesel::insert_into(journeys)
         .values(&journey)
         .on_conflict(journey_ref)
         .do_update()

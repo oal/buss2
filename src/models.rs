@@ -5,6 +5,7 @@ use crate::schema::routes;
 use crate::schema::journeys;
 use crate::schema::estimated_calls;
 use chrono::{DateTime, Utc};
+use diesel::{AsExpression, FromSqlRow};
 
 #[derive(Queryable, Insertable)]
 #[diesel(table_name = quays)]
@@ -36,12 +37,20 @@ pub struct Route {
     pub name: String,
 }
 
+#[derive(diesel_derive_enum::DbEnum, Debug)]
+#[ExistingTypePath = "crate::schema::sql_types::DirectionEnum"]
+pub enum Direction {
+    Outbound,
+    Inbound,
+}
+
 #[derive(Insertable, AsChangeset)]
 #[diesel(table_name = journeys)]
 #[derive(Debug)]
 pub struct NewJourney {
     pub route_id: i32,
     pub journey_ref: String,
+    pub direction: Direction,
 }
 
 #[derive(Insertable, AsChangeset)]

@@ -21,13 +21,14 @@ async fn main() {
 }
 
 async fn index() -> &'static str {
-    let mut connection = buss2::db::establish_connection();
-    let quay_id = diesel::select(quays::id)
-        .from(quays::table)
-        .first::<i32>(&mut connection)
-        .unwrap();
+    // let mut connection = buss2::db::establish_connection();
+    // let quay_id = diesel::select(quays::id)
+    //     .from(quays::table)
+    //     .first::<i32>(&mut connection)
+    //     .unwrap();
 
-    &format!("Hello, World! {quay_id}")
+    // &format!("Hello, World! {quay_id}")
+    "Hello, World!"
 }
 
 fn sync_timetables_forever() {

@@ -2,6 +2,8 @@ use diesel::pg::PgConnection;
 use diesel::prelude::*;
 use dotenvy::dotenv;
 use std::env;
+use buss2::db::establish_connection;
+use buss2::helpers::get_last_as_i32;
 use buss2::models::{Quay, Route, Stop};
 
 fn main() {
@@ -13,14 +15,6 @@ fn main() {
     import_routes(&mut connection);
 }
 
-pub fn establish_connection() -> PgConnection {
-    dotenv().ok();
-
-    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    PgConnection::establish(&database_url)
-        .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
-}
-
 fn read_stops_file() -> csv::Reader<std::fs::File> {
     let dir = "/home/olav/Downloads/rb_akt-aggregated-gtfs(1)/stops.txt";
     return csv::Reader::from_path(dir).unwrap();
@@ -29,10 +23,6 @@ fn read_stops_file() -> csv::Reader<std::fs::File> {
 fn read_routes_file() -> csv::Reader<std::fs::File> {
     let dir = "/home/olav/Downloads/rb_akt-aggregated-gtfs(1)/routes.txt";
     return csv::Reader::from_path(dir).unwrap();
-}
-
-fn get_last_as_i32(value: &str) -> i32 {
-    return value.split(':').last().unwrap().parse().unwrap();
 }
 
 fn import_stops(connection: &mut PgConnection) {

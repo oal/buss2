@@ -2,6 +2,9 @@ use diesel::prelude::*;
 use crate::schema::stops;
 use crate::schema::quays;
 use crate::schema::routes;
+use crate::schema::journeys;
+use crate::schema::estimated_calls;
+use chrono::{DateTime, Utc};
 
 #[derive(Queryable, Insertable)]
 #[diesel(table_name = quays)]
@@ -31,4 +34,27 @@ pub struct Route {
     pub id: i32,
     pub short_name: String,
     pub name: String,
+}
+
+#[derive(Insertable, AsChangeset)]
+#[diesel(table_name = journeys)]
+#[derive(Debug)]
+pub struct NewJourney {
+    pub route_id: i32,
+    pub journey_ref: String,
+}
+
+#[derive(Insertable, AsChangeset)]
+#[diesel(table_name = estimated_calls)]
+#[derive(Debug)]
+pub struct NewEstimatedCall {
+    pub journey_id: i32,
+    pub order_in_journey: i32,
+
+    pub quay_id: i32,
+
+    pub target_arrival_time: Option<DateTime<Utc>>,
+    pub target_departure_time: Option<DateTime<Utc>>,
+    pub expected_arrival_time: Option<DateTime<Utc>>,
+    pub expected_departure_time: Option<DateTime<Utc>>,
 }

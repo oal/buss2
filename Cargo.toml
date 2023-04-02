@@ -15,7 +15,8 @@ path = "src/bin/download_timetable.rs"
 
 [dependencies]
 csv = "1.2.1"
-diesel = { version = "2.0.3", features = ["postgres"] }
+chrono = "0.4.24"
+diesel = { version = "2.0.3", features = ["postgres", "chrono"] }
 dotenvy = "0.15"
 reqwest = "0.11.16"
 serde = { verison = "1.0.159", features = ["derive"] }

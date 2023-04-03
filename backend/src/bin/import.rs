@@ -1,7 +1,5 @@
-use diesel::prelude::*;
+use csv::Reader;
 use dotenvy::dotenv;
-use std::env;
-use diesel_async::pooled_connection::deadpool::Pool;
 use diesel_async::{RunQueryDsl};
 use buss2::db::{create_db_pool, DbPool};
 use buss2::helpers::get_last_as_i32;
@@ -18,14 +16,14 @@ async fn main() {
     import_routes(pool).await;
 }
 
-fn read_stops_file() -> csv::Reader<std::fs::File> {
+fn read_stops_file() -> Reader<std::fs::File> {
     let dir = "/home/olav/Downloads/rb_akt-aggregated-gtfs(1)/stops.txt";
-    return csv::Reader::from_path(dir).unwrap();
+    Reader::from_path(dir).unwrap()
 }
 
-fn read_routes_file() -> csv::Reader<std::fs::File> {
+fn read_routes_file() -> Reader<std::fs::File> {
     let dir = "/home/olav/Downloads/rb_akt-aggregated-gtfs(1)/routes.txt";
-    return csv::Reader::from_path(dir).unwrap();
+    Reader::from_path(dir).unwrap()
 }
 
 async fn import_stops(pool: DbPool) {
@@ -89,7 +87,7 @@ async fn import_routes(pool: DbPool) {
         let record = result.unwrap();
         use buss2::schema::routes::dsl::*;
         let route = Route {
-            id: get_last_as_i32(&record[1].to_string()),
+            id: get_last_as_i32(&record[1]),
             short_name: record[2].to_string(),
             name: record[3].to_string(),
         };

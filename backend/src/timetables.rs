@@ -2,15 +2,13 @@ use std::time::Instant;
 use chrono::{DateTime, Utc};
 use diesel_async::{RunQueryDsl};
 use anyhow::Result;
-use diesel::row::NamedRow;
-use diesel_async::pooled_connection::deadpool::Pool;
 use serde::{Deserialize, Serialize};
 use tokio::task;
-use crate::db::{DbConnection, DbPool};
+use crate::db::{DbPool};
 use crate::helpers::get_last_as_i32;
 use crate::models::{Direction, NewEstimatedCall, NewJourney};
 
-pub async fn sync_timetables(requestor_id: &str, mut pool: DbPool) {
+pub async fn sync_timetables(requestor_id: &str, pool: DbPool) {
     println!("Syncing timetables... (requestor_id: {})", requestor_id);
 
     let now = Instant::now();
@@ -29,14 +27,12 @@ pub async fn sync_timetables(requestor_id: &str, mut pool: DbPool) {
 
 async fn load_estimated_timetables(requestor_id: &str) -> String {
     let url = "https://api.entur.io/realtime/v1/rest/et?datasetId=AKT&requestorId=".to_string() + requestor_id;
-    let mut response = reqwest::get(url).await.unwrap();
-    let body = response.text().await.unwrap().to_string();
-    body
+    let response = reqwest::get(url).await.unwrap();
+    response.text().await.unwrap()
 }
 
-async fn load_estimated_timetables_from_file(requestor_id: &str) -> String {
-    let body = std::fs::read_to_string("akt.xml").unwrap();
-    body
+async fn load_estimated_timetables_from_file(_requestor_id: &str) -> String {
+    std::fs::read_to_string("akt.xml").unwrap()
 }
 
 async fn insert_journeys(siri: Siri, pool: DbPool) {
@@ -81,7 +77,7 @@ async fn insert_journey(journey: &EstimatedVehicleJourney, pool: DbPool) -> Resu
         .await
         .expect("Error saving journey.");
 
-    return Ok(result.0);
+    Ok(result.0)
 }
 
 

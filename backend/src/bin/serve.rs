@@ -1,15 +1,11 @@
-use std::env;
 use std::net::SocketAddr;
-use std::sync::Arc;
 use std::time::Duration;
-use axum::{Router, ServiceExt};
-use axum::handler::Handler;
+use axum::Router;
 use axum::routing::get;
 use dotenvy::dotenv;
 use tokio::task;
 use tokio::time::sleep;
 use buss2::db::{create_db_pool, DbPool};
-use buss2::schema::quays;
 use buss2::timetables::sync_timetables;
 
 

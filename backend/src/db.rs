@@ -1,8 +1,6 @@
 use std::env;
-use diesel::{Connection};
 use diesel_async::pooled_connection::AsyncDieselConnectionManager;
-use diesel_async::pooled_connection::deadpool::{Object, Pool};
-use dotenvy::dotenv;
+use diesel_async::pooled_connection::deadpool::{Pool};
 
 // pub fn create_db_pool() -> Pool {
 //     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
@@ -19,8 +17,8 @@ pub type DbConnection = diesel_async::AsyncPgConnection;
 pub async fn create_db_pool() -> DbPool {
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     let config = AsyncDieselConnectionManager::<diesel_async::AsyncPgConnection>::new(database_url);
-    let pool = Pool::builder(config).build().unwrap();
-    pool
+
+    Pool::builder(config).build().unwrap()
 }
 
 // #[derive(Clone)]

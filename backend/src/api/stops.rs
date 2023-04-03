@@ -2,7 +2,6 @@ use axum::extract::{Path, Query, State};
 use axum::Json;
 use axum::response::IntoResponse;
 use diesel::prelude::*;
-use diesel_async::pooled_connection::deadpool::Pool;
 use diesel_async::{RunQueryDsl};
 use crate::db::{DbPool};
 use crate::models::{Quay, Stop};

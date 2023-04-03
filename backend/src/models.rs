@@ -5,7 +5,6 @@ use crate::schema::routes;
 use crate::schema::journeys;
 use crate::schema::estimated_calls;
 use chrono::{DateTime, Utc};
-use diesel::{AsExpression, FromSqlRow};
 use serde::Serialize;
 
 #[derive(Queryable, Insertable, Identifiable, Associations, Serialize, Debug)]

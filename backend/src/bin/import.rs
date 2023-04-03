@@ -1,21 +1,21 @@
-use diesel::pg::PgConnection;
 use diesel::prelude::*;
 use dotenvy::dotenv;
 use std::env;
 use diesel_async::pooled_connection::deadpool::Pool;
-use buss2::db::{create_db_pool};
+use diesel_async::{RunQueryDsl};
+use buss2::db::{create_db_pool, DbPool};
 use buss2::helpers::get_last_as_i32;
 use buss2::models::{Quay, Route, Stop};
 
 #[tokio::main]
 async fn main() {
-    let mut connection = establish_connection();
+    dotenv().ok();
     let pool = create_db_pool().await;
 
     println!("Import");
-    import_stops(&pool);
-    import_quays(&pool);
-    import_routes(&pool);
+    import_stops(pool.clone()).await;
+    import_quays(pool.clone()).await;
+    import_routes(pool).await;
 }
 
 fn read_stops_file() -> csv::Reader<std::fs::File> {
@@ -28,8 +28,8 @@ fn read_routes_file() -> csv::Reader<std::fs::File> {
     return csv::Reader::from_path(dir).unwrap();
 }
 
-fn import_stops(connection: &Pool) {
-
+async fn import_stops(pool: DbPool) {
+    let mut connection = pool.get().await.unwrap();
     let mut rdr = read_stops_file();
     for result in rdr.records() {
         let record = result.unwrap();
@@ -48,13 +48,14 @@ fn import_stops(connection: &Pool) {
             diesel::insert_into(stops)
                 .values(&stop)
                 .on_conflict_do_nothing()
-                .execute(connection)
+                .execute(&mut connection).await
                 .expect("Error saving stop.");
         }
     }
 }
 
-fn import_quays(connection: &Pool<_>) {
+async fn import_quays(pool: DbPool) {
+    let mut connection = pool.get().await.unwrap();
     let mut rdr = read_stops_file();
     for result in rdr.records() {
         let record = result.unwrap();
@@ -74,13 +75,15 @@ fn import_quays(connection: &Pool<_>) {
             diesel::insert_into(quays)
                 .values(&quay)
                 .on_conflict_do_nothing()
-                .execute(connection)
+                .execute(&mut connection)
+                .await
                 .expect("Error saving quay.");
         }
     }
 }
 
-fn import_routes(connection: &Pool<_>) {
+async fn import_routes(pool: DbPool) {
+    let mut connection = pool.get().await.unwrap();
     let mut rdr = read_routes_file();
     for result in rdr.records() {
         let record = result.unwrap();
@@ -96,7 +99,8 @@ fn import_routes(connection: &Pool<_>) {
         diesel::insert_into(routes)
             .values(&route)
             .on_conflict_do_nothing()
-            .execute(connection)
+            .execute(&mut connection)
+            .await
             .expect("Error saving route.");
     }
 }

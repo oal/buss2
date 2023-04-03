@@ -49,8 +49,9 @@ async fn index() -> &'static str {
 fn sync_timetables_forever(pool: DbPool) {
     task::spawn(async move {
         loop {
-            sync_timetables("1828b7c2-fcc8-47f4-b6cc-541e0015a8d5", pool.clone()).await;
-            println!("Synced timetables.");
+            let now = std::time::Instant::now();
+            sync_timetables("1828b7c2-fcc8-47f4-b6cc-541e0015a8d4", pool.clone()).await;
+            println!("Synced timetables in {} ms.", now.elapsed().as_millis());
             sleep(Duration::from_secs(60)).await;
         }
     });

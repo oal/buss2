@@ -123,6 +123,7 @@ dependencies = [
  "diesel-async",
  "diesel-derive-enum",
  "dotenvy",
+ "futures",
  "reqwest",
  "serde",
  "serde-xml-rs",

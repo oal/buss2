@@ -1,19 +1,30 @@
+use std::time::Instant;
 use chrono::{DateTime, Utc};
 use diesel_async::{RunQueryDsl};
 use anyhow::Result;
 use diesel::row::NamedRow;
 use diesel_async::pooled_connection::deadpool::Pool;
 use serde::{Deserialize, Serialize};
+use tokio::task;
 use crate::db::{DbConnection, DbPool};
 use crate::helpers::get_last_as_i32;
 use crate::models::{Direction, NewEstimatedCall, NewJourney};
 
 pub async fn sync_timetables(requestor_id: &str, mut pool: DbPool) {
     println!("Syncing timetables... (requestor_id: {})", requestor_id);
+
+    let now = Instant::now();
     let body = load_estimated_timetables(requestor_id).await;
+    // let body = load_estimated_timetables_from_file(requestor_id).await;
+    println!("Loaded in {} ms.", now.elapsed().as_millis());
+
+    let now = Instant::now();
     let siri: Siri = serde_xml_rs::from_str(&body).unwrap();
-    let mut connection = pool.get().await.unwrap();
+    println!("Deserialized in {} ms.", now.elapsed().as_millis());
+
+    let now = Instant::now();
     insert_journeys(siri, pool).await;
+    println!("Inserted in {} ms.", now.elapsed().as_millis());
 }
 
 async fn load_estimated_timetables(requestor_id: &str) -> String {
@@ -23,20 +34,36 @@ async fn load_estimated_timetables(requestor_id: &str) -> String {
     body
 }
 
+async fn load_estimated_timetables_from_file(requestor_id: &str) -> String {
+    let body = std::fs::read_to_string("akt.xml").unwrap();
+    body
+}
+
 async fn insert_journeys(siri: Siri, pool: DbPool) {
-    for journey in siri.service_delivery.estimated_time_table_delivery.estimated_journey_version_frame.estimated_vehicle_journey {
-        if let Ok(journey_id) = insert_journey(&journey, pool.clone()).await {
-            insert_estimated_calls(journey_id, &journey.estimated_calls.estimated_call, pool.clone());
-        }
-    }
+    let raw_journeys = siri.service_delivery.estimated_time_table_delivery.estimated_journey_version_frame.estimated_vehicle_journey;
+    let tasks = raw_journeys.into_iter().map(|journey| {
+        let pool = pool.clone();
+        task::spawn(async move {
+            if let Ok(journey_id) = insert_journey(&journey, pool.clone()).await {
+                insert_estimated_calls(journey_id, &journey.estimated_calls.estimated_call, pool.clone()).await;
+            } else {}
+        })
+    });
+
+    futures::future::join_all(tasks).await;
 }
 
 async fn insert_journey(journey: &EstimatedVehicleJourney, pool: DbPool) -> Result<i32> {
     use crate::schema::journeys::dsl::*;
+    // let first_call_date = journey.estimated_calls.estimated_call[0].aimed_departure_time.clone()
+    //     .unwrap_or("".to_string())
+    //     .split("T")
+    //     .next()
+    //     .unwrap_or(&"".to_string()).to_string();
     let journey_ref_str = &journey.dated_vehicle_journey_ref;
     let journey = NewJourney {
         route_id: get_last_as_i32(&journey.line_ref),
-        journey_ref: journey_ref_str.to_string(),
+        journey_ref: journey_ref_str.to_string(), //format!("{}|{}", journey_ref_str.to_string(), first_call_date),
         direction: if journey.direction_ref == "Outbound" {
             Direction::Outbound
         } else {

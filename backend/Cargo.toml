@@ -25,5 +25,6 @@ reqwest = "0.11.16"
 serde = { verison = "1.0.159", features = ["derive"] }
 serde-xml-rs = "0.6.0"
 tokio = { version = "1", features = ["full"] }
+futures = "0.3.28"
 anyhow = "1.0.70"
 axum = "0.6.12"

@@ -23,7 +23,7 @@ async fn main() {
         .nest("/api", buss2::api::api_router(pool.clone()).await);
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
 
-    sync_timetables_forever(pool);
+    // sync_timetables_forever(pool);
 
     axum::Server::bind(&addr)
         .serve(app.into_make_service())

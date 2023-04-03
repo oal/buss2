@@ -42,22 +42,33 @@ pub enum Direction {
     Inbound,
 }
 
-#[derive(Insertable, AsChangeset)]
+#[derive(Insertable, AsChangeset, Debug)]
 #[diesel(table_name = journeys)]
-#[derive(Debug)]
 pub struct NewJourney {
     pub route_id: i32,
     pub journey_ref: String,
     pub direction: Direction,
 }
 
-#[derive(Insertable, AsChangeset)]
+#[derive(Insertable, AsChangeset, Debug)]
 #[diesel(table_name = estimated_calls)]
-#[derive(Debug)]
 pub struct NewEstimatedCall {
     pub journey_id: i32,
     pub order_in_journey: i32,
 
+    pub quay_id: i32,
+
+    pub target_arrival_time: Option<DateTime<Utc>>,
+    pub target_departure_time: Option<DateTime<Utc>>,
+    pub expected_arrival_time: Option<DateTime<Utc>>,
+    pub expected_departure_time: Option<DateTime<Utc>>,
+}
+
+#[derive(Identifiable, Queryable, Selectable, Associations, Serialize, Debug)]
+#[diesel(belongs_to(Quay))]
+#[diesel(table_name = estimated_calls)]
+pub struct EstimatedCall {
+    pub id: i32,
     pub quay_id: i32,
 
     pub target_arrival_time: Option<DateTime<Utc>>,

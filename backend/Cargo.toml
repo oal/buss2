@@ -15,7 +15,7 @@ path = "src/bin/import.rs"
 
 [dependencies]
 csv = "1.2.1"
-chrono = "0.4.24"
+chrono = { version = "0.4.24", features = ["serde"] }
 deadpool = "0.9.5"
 diesel = { version = "2.0.3", features = ["chrono"] }
 diesel-async = { version = "0.2.1", features = ["postgres", "deadpool"] }

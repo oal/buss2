@@ -1,0 +1,42 @@
+<template>
+  <div>
+    <q-input filled v-model="search" debounce="500" label="Søk etter stopp"></q-input>
+    <q-list bordered separator>
+      <q-item clickable v-ripple v-for="stop in stops" :key="stop.id">
+        <q-item-section>{{ stop.name }}</q-item-section>
+      </q-item>
+    </q-list>
+  </div>
+</template>
+
+<script lang="ts">
+export default {
+  name: 'StopSearch',
+  data() {
+    return {
+      search: '',
+      stops: []
+    }
+  },
+
+  watch: {
+    search(val: string) {
+      if (val.length < 3) {
+        this.stops = []
+        return
+      }
+      this.$axios.get('/api/stops', {
+        params: {
+          search: val
+        }
+      }).then((response) => {
+        this.stops = response.data
+      });
+    }
+  }
+}
+</script>
+
+<style lang="scss" scoped>
+
+</style>

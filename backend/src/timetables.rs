@@ -1,15 +1,19 @@
 use chrono::{DateTime, Utc};
-use diesel::{PgConnection, RunQueryDsl};
+use diesel_async::{RunQueryDsl};
 use anyhow::Result;
+use diesel::row::NamedRow;
+use diesel_async::pooled_connection::deadpool::Pool;
 use serde::{Deserialize, Serialize};
+use crate::db::{DbConnection, DbPool};
 use crate::helpers::get_last_as_i32;
 use crate::models::{Direction, NewEstimatedCall, NewJourney};
 
-pub async fn sync_timetables(requestor_id: &str, mut connection: &mut PgConnection) {
+pub async fn sync_timetables(requestor_id: &str, mut pool: DbPool) {
     println!("Syncing timetables... (requestor_id: {})", requestor_id);
     let body = load_estimated_timetables(requestor_id).await;
     let siri: Siri = serde_xml_rs::from_str(&body).unwrap();
-    insert_journeys(siri, &mut connection);
+    let mut connection = pool.get().await.unwrap();
+    insert_journeys(siri, pool).await;
 }
 
 async fn load_estimated_timetables(requestor_id: &str) -> String {
@@ -19,15 +23,15 @@ async fn load_estimated_timetables(requestor_id: &str) -> String {
     body
 }
 
-fn insert_journeys(siri: Siri, mut connection: &mut PgConnection) {
+async fn insert_journeys(siri: Siri, pool: DbPool) {
     for journey in siri.service_delivery.estimated_time_table_delivery.estimated_journey_version_frame.estimated_vehicle_journey {
-        if let Ok(journey_id) = insert_journey(&journey, &mut connection) {
-            insert_estimated_calls(journey_id, &journey.estimated_calls.estimated_call, &mut connection);
+        if let Ok(journey_id) = insert_journey(&journey, pool.clone()).await {
+            insert_estimated_calls(journey_id, &journey.estimated_calls.estimated_call, pool.clone());
         }
     }
 }
 
-fn insert_journey(journey: &EstimatedVehicleJourney, mut connection: &mut PgConnection) -> Result<i32> {
+async fn insert_journey(journey: &EstimatedVehicleJourney, pool: DbPool) -> Result<i32> {
     use crate::schema::journeys::dsl::*;
     let journey_ref_str = &journey.dated_vehicle_journey_ref;
     let journey = NewJourney {
@@ -40,19 +44,22 @@ fn insert_journey(journey: &EstimatedVehicleJourney, mut connection: &mut PgConn
         },
     };
 
+    let mut connection = pool.get().await.unwrap();
     let result: (i32, Option<i32>, String, Direction) = diesel::insert_into(journeys)
         .values(&journey)
         .on_conflict(journey_ref)
         .do_update()
         .set(&journey)
-        .get_result(connection)
+        .get_result(&mut connection)
+        .await
         .expect("Error saving journey.");
 
     return Ok(result.0);
 }
 
 
-fn insert_estimated_calls(internal_id: i32, calls: &Vec<EstimatedCall>, mut connection: &mut PgConnection) {
+async fn insert_estimated_calls(internal_id: i32, calls: &Vec<EstimatedCall>, pool: DbPool) {
+    let mut connection = pool.get().await.unwrap();
     use crate::schema::estimated_calls::dsl::*;
     for call in calls {
         let estimated_call = NewEstimatedCall {
@@ -73,7 +80,8 @@ fn insert_estimated_calls(internal_id: i32, calls: &Vec<EstimatedCall>, mut conn
             .on_conflict((journey_id, order_in_journey))
             .do_update()
             .set(&estimated_call)
-            .execute(connection)
+            .execute(&mut connection)
+            .await
             .expect("Error saving stop.");
     }
 }

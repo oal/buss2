@@ -2,17 +2,20 @@ use diesel::pg::PgConnection;
 use diesel::prelude::*;
 use dotenvy::dotenv;
 use std::env;
-use buss2::db::establish_connection;
+use diesel_async::pooled_connection::deadpool::Pool;
+use buss2::db::{create_db_pool};
 use buss2::helpers::get_last_as_i32;
 use buss2::models::{Quay, Route, Stop};
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let mut connection = establish_connection();
+    let pool = create_db_pool().await;
 
     println!("Import");
-    import_stops(&mut connection);
-    import_quays(&mut connection);
-    import_routes(&mut connection);
+    import_stops(&pool);
+    import_quays(&pool);
+    import_routes(&pool);
 }
 
 fn read_stops_file() -> csv::Reader<std::fs::File> {
@@ -25,7 +28,8 @@ fn read_routes_file() -> csv::Reader<std::fs::File> {
     return csv::Reader::from_path(dir).unwrap();
 }
 
-fn import_stops(connection: &mut PgConnection) {
+fn import_stops(connection: &Pool) {
+
     let mut rdr = read_stops_file();
     for result in rdr.records() {
         let record = result.unwrap();
@@ -50,7 +54,7 @@ fn import_stops(connection: &mut PgConnection) {
     }
 }
 
-fn import_quays(connection: &mut PgConnection) {
+fn import_quays(connection: &Pool<_>) {
     let mut rdr = read_stops_file();
     for result in rdr.records() {
         let record = result.unwrap();
@@ -76,7 +80,7 @@ fn import_quays(connection: &mut PgConnection) {
     }
 }
 
-fn import_routes(connection: &mut PgConnection) {
+fn import_routes(connection: &Pool<_>) {
     let mut rdr = read_routes_file();
     for result in rdr.records() {
         let record = result.unwrap();

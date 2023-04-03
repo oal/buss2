@@ -42,7 +42,7 @@ async fn insert_journeys(siri: Siri, pool: DbPool) {
         task::spawn(async move {
             if let Ok(journey_id) = insert_journey(&journey, pool.clone()).await {
                 insert_estimated_calls(journey_id, &journey.estimated_calls.estimated_call, pool.clone()).await;
-            } else {}
+            }
         })
     });
 
@@ -68,7 +68,7 @@ async fn insert_journey(journey: &EstimatedVehicleJourney, pool: DbPool) -> Resu
     };
 
     let mut connection = pool.get().await.unwrap();
-    let result: (i32, Option<i32>, String, Direction) = diesel::insert_into(journeys)
+    let result: (i32, i32, String, Direction) = diesel::insert_into(journeys)
         .values(&journey)
         .on_conflict(journey_ref)
         .do_update()

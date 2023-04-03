@@ -9,11 +9,11 @@ pub mod sql_types {
 diesel::table! {
     estimated_calls (id) {
         id -> Int4,
-        journey_id -> Nullable<Int4>,
+        journey_id -> Int4,
         order_in_journey -> Int4,
-        quay_id -> Nullable<Int4>,
-        is_cancelled -> Nullable<Bool>,
-        is_inaccurate -> Nullable<Bool>,
+        quay_id -> Int4,
+        is_cancelled -> Bool,
+        is_inaccurate -> Bool,
         target_arrival_time -> Nullable<Timestamptz>,
         target_departure_time -> Nullable<Timestamptz>,
         expected_arrival_time -> Nullable<Timestamptz>,
@@ -27,7 +27,7 @@ diesel::table! {
 
     journeys (id) {
         id -> Int4,
-        route_id -> Nullable<Int4>,
+        route_id -> Int4,
         journey_ref -> Text,
         direction -> DirectionEnum,
     }

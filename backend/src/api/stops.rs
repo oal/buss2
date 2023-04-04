@@ -4,6 +4,7 @@ use axum::response::IntoResponse;
 use diesel::prelude::*;
 use diesel_async::{RunQueryDsl};
 use serde::Serialize;
+use ts_rs::TS;
 use crate::db::{DbPool};
 use crate::models::{EstimatedCall, Quay, Stop};
 
@@ -29,7 +30,8 @@ pub(crate) async fn list(
     Json(results)
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, TS)]
+#[ts(export)]
 struct StopWithQuays {
     #[serde(flatten)]
     stop: Stop,

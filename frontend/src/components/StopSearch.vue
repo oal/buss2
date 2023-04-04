@@ -22,13 +22,14 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
+import type { StopWithQuays } from '../../../backend/bindings/StopWithQuays';
 
 export default defineComponent({
   name: 'StopSearch',
   data() {
     return {
       search: '',
-      stops: [],
+      stops: [] as StopWithQuays[],
     };
   },
 
@@ -39,7 +40,7 @@ export default defineComponent({
         return;
       }
       this.$axios
-        .get('/api/stops', {
+        .get<StopWithQuays[]>('/api/stops', {
           params: {
             search: val,
           },

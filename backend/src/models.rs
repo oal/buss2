@@ -6,10 +6,12 @@ use crate::schema::journeys;
 use crate::schema::estimated_calls;
 use chrono::{DateTime, Utc};
 use serde::Serialize;
+use ts_rs::TS;
 
-#[derive(Queryable, Insertable, Identifiable, Associations, Serialize, Debug)]
+#[derive(Queryable, Insertable, Identifiable, Associations, Serialize, TS, Debug)]
 #[diesel(table_name = quays)]
 #[diesel(belongs_to(Stop))]
+#[ts(export)]
 pub struct Quay {
     pub id: i32,
     pub name: String,
@@ -18,8 +20,9 @@ pub struct Quay {
     pub stop_id: i32,
 }
 
-#[derive(Queryable, Insertable, Identifiable, Selectable, Serialize, Debug)]
+#[derive(Queryable, Insertable, Identifiable, Selectable, Serialize, TS, Debug)]
 #[diesel(table_name = stops)]
+#[ts(export)]
 pub struct Stop {
     pub id: i32,
     pub name: String,

@@ -7,9 +7,11 @@ use axum::response::IntoResponse;
 use chrono::{Utc};
 use diesel::query_dsl::methods::DistinctOnDsl;
 use serde::Serialize;
+use ts_rs::TS;
 use crate::db::{DbConnection, DbPool};
 
-#[derive(Queryable, Serialize)]
+#[derive(Queryable, Serialize, TS)]
+#[ts(export)]
 struct QuayRoute {
     id: i32,
     short_name: String,
@@ -26,7 +28,7 @@ pub(crate) async fn show(
     Json(result)
 }
 
-async fn get_quay_routes(connection: &mut DbConnection, _id: i32) -> Vec<QuayRoute> {
+async fn get_quay_routes(connection: &mut DbConnection, quay_id: i32) -> Vec<QuayRoute> {
     let now = Utc::now();
     let a_week_ago = now.sub(chrono::Duration::weeks(1));
 
@@ -37,7 +39,7 @@ async fn get_quay_routes(connection: &mut DbConnection, _id: i32) -> Vec<QuayRou
         .inner_join(crate::schema::journeys::table.inner_join(estimated_calls::table))
         .filter(estimated_calls::expected_arrival_time.lt(now))
         .filter(estimated_calls::expected_arrival_time.gt(a_week_ago))
-        .filter(estimated_calls::quay_id.eq(_id))
+        .filter(estimated_calls::quay_id.eq(quay_id))
         .distinct_on(id)
         .load(connection)
         .await

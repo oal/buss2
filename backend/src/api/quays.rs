@@ -9,13 +9,14 @@ use diesel::query_dsl::methods::DistinctOnDsl;
 use serde::Serialize;
 use ts_rs::TS;
 use crate::db::{DbConnection, DbPool};
+use crate::models::Quay;
 
 #[derive(Queryable, Serialize, TS)]
 #[ts(export)]
-struct QuayRoute {
-    id: i32,
-    short_name: String,
-    name: String,
+struct QuayAugmented {
+    #[serde(flatten)]
+    quay: Quay,
+    routes: Vec<QuayRoute>,
 }
 
 pub(crate) async fn show(
@@ -24,8 +25,25 @@ pub(crate) async fn show(
 ) -> impl IntoResponse {
     let mut connection = pool.get().await.unwrap();
 
-    let result = get_quay_routes(&mut connection, _id).await;
-    Json(result)
+    let quay = get_quay(&mut connection, _id).await.unwrap();
+    let routes = get_quay_routes(&mut connection, _id).await;
+    Json(QuayAugmented {
+        quay,
+        routes,
+    })
+}
+
+async fn get_quay(connection: &mut DbConnection, _id: i32) -> Result<Quay, diesel::result::Error> {
+    use crate::schema::quays::dsl::*;
+    quays.find(_id).first::<Quay>(connection).await
+}
+
+#[derive(Queryable, Serialize, TS)]
+#[ts(export)]
+struct QuayRoute {
+    id: i32,
+    short_name: String,
+    name: String,
 }
 
 async fn get_quay_routes(connection: &mut DbConnection, quay_id: i32) -> Vec<QuayRoute> {

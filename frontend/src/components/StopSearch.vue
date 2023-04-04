@@ -22,7 +22,7 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import type { StopWithQuays } from '../../../backend/bindings/StopWithQuays';
+import { StopWithQuays } from 'types/StopWithQuays';
 
 export default defineComponent({
   name: 'StopSearch',

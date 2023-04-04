@@ -10,7 +10,7 @@
           aria-label="Menu"
           @click="toggleLeftDrawer"
         />
-        <q-toolbar-title>Buss</q-toolbar-title>
+        <q-toolbar-title>{{ store.appTitle }}</q-toolbar-title>
       </q-toolbar>
     </q-header>
 
@@ -35,12 +35,13 @@
 <script lang="ts">
 import { defineComponent, ref } from 'vue';
 import MenuItem from 'components/MenuItem.vue';
+import { useAppStore } from 'stores/app-store';
 
 const linksList = [
   {
     title: 'Søk',
     caption: 'Finn busstopp',
-    icon: 'school',
+    icon: 'search',
     to: { name: 'Search' },
   },
 ];
@@ -61,6 +62,7 @@ export default defineComponent({
       toggleLeftDrawer() {
         leftDrawerOpen.value = !leftDrawerOpen.value;
       },
+      store: useAppStore(),
     };
   },
 });

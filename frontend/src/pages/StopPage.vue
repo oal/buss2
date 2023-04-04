@@ -1,6 +1,5 @@
 <template>
-  <div v-if="stop">
-    <h1>{{ stop.name }}</h1>
+  <q-page v-if="stop">
     <l-map ref="map" v-model:zoom="zoom" :center="[stop.lat, stop.lon]">
       <l-marker
         :lat-lng="[quay.lat, quay.lon]"
@@ -20,30 +19,37 @@
         name="OpenStreetMap"
       ></l-tile-layer>
     </l-map>
-  </div>
+  </q-page>
 </template>
 
 <script>
 import 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { LMap, LMarker, LPopup, LTileLayer } from '@vue-leaflet/vue-leaflet';
+import { useAppStore } from 'stores/app-store.ts';
 
 export default {
   name: 'StopPage',
   components: { LPopup, LMarker, LTileLayer, LMap },
-  created() {
-    this.loadData();
+  setup() {
+    return {
+      store: useAppStore(),
+    };
+  },
+  async created() {
+    await this.loadData();
+    this.store.setAppTitle(this.stop.name ?? 'Stopp');
   },
   data() {
     return {
       stop: null,
-      zoom: 17,
+      zoom: 18,
     };
   },
 
   methods: {
     loadData() {
-      this.$axios
+      return this.$axios
         .get(`/api/stops/${this.$route.params.id}`)
         .then((response) => {
           this.stop = response.data;
@@ -58,6 +64,6 @@ export default {
 
 <style lang="scss">
 .leaflet-container {
-  min-height: 50vh;
+  min-height: inherit;
 }
 </style>

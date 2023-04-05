@@ -16,6 +16,11 @@ const routes: RouteRecordRaw[] = [
         name: 'Stop',
         component: () => import('pages/StopPage.vue'),
       },
+      {
+        path: 'quay/:id',
+        name: 'Quay',
+        component: () => import('pages/QuayPage.vue'),
+      },
     ],
   },
 

@@ -15,19 +15,26 @@
                 {{ quays[quay.id].name }}
               </div>
             </q-card-section>
-            <q-separator />
-            <q-card-actions>
-              <q-chip v-for="route in quays[quay.id].routes" :key="route.id">
-                <q-avatar color="primary" text-color="white">{{
-                  route.short_name
-                }}</q-avatar>
-                {{ route.name }}
-              </q-chip>
-            </q-card-actions>
+            <template v-if="quays[quay.id].routes?.length">
+              <q-separator />
+              <q-card-actions>
+                <q-chip
+                  v-for="route in quays[quay.id].routes"
+                  :key="route.id"
+                  clickable
+                  @click="onRouteClick(quay.id, route.id)"
+                >
+                  <q-avatar color="primary" text-color="white">
+                    {{ route.short_name }}
+                  </q-avatar>
+                  {{ route.name }}
+                </q-chip>
+              </q-card-actions>
+            </template>
             <q-separator />
             <q-card-actions>
               <q-btn
-                :to="{ name: 'Quay', params: { id: quay.id } }"
+                @click="onRouteClick(quay.id)"
                 label="Vis tider for stopp"
                 icon-right="arrow_forward"
                 color="primary"
@@ -81,7 +88,15 @@ export default defineComponent({
       return this.$axios
         .get(`/api/stops/${this.$route.params.id}`)
         .then((response) => {
-          this.stop = response.data;
+          if (response.data.quays.length === 1) {
+            // Go directly to quay (no need to select from map).
+            this.$router.replace({
+              name: 'Quay',
+              params: { id: response.data.quays[0].id },
+            });
+          } else {
+            this.stop = response.data;
+          }
         })
         .catch((error) => {
           console.log(error);
@@ -97,6 +112,14 @@ export default defineComponent({
         .catch((error) => {
           console.log(error);
         });
+    },
+
+    onRouteClick(quayId: number, routeId?: number) {
+      this.$router.push({
+        name: 'Quay',
+        params: { id: quayId },
+        query: routeId ? { routes: [routeId] } : undefined,
+      });
     },
   },
 });

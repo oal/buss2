@@ -30,8 +30,9 @@ pub struct Stop {
     pub lon: f64,
 }
 
-#[derive(Queryable, Insertable, Debug)]
+#[derive(Queryable, Insertable, Selectable, Serialize, TS, Debug)]
 #[diesel(table_name = routes)]
+#[ts(export)]
 pub struct Route {
     pub id: i32,
     pub short_name: String,
@@ -54,6 +55,7 @@ pub struct NewJourney {
 }
 
 #[derive(Insertable, AsChangeset, Debug)]
+#[diesel(belongs_to(Journey))]
 #[diesel(table_name = estimated_calls)]
 pub struct NewEstimatedCall {
     pub journey_id: i32,
@@ -73,6 +75,7 @@ pub struct NewEstimatedCall {
 pub struct EstimatedCall {
     pub id: i32,
     pub quay_id: i32,
+    pub journey_id: i32,
 
     pub target_arrival_time: Option<DateTime<Utc>>,
     pub target_departure_time: Option<DateTime<Utc>>,

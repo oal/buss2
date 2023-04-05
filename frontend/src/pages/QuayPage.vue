@@ -1,22 +1,36 @@
 <template>
   <q-page>
-    <div v-if="quay">
-      <q-item-label header>Bussruter</q-item-label>
-      <q-list>
-        <q-item v-for="route in quay.routes" :key="route.id">
-          <q-checkbox v-model="selectedRoutes" :val="route.id">
-            <strong>
-              {{ route.short_name }}
-            </strong>
-            |
-            {{ route.name }}
-          </q-checkbox>
-        </q-item>
-      </q-list>
-    </div>
+    <div v-if="quay"></div>
     <q-list>
       <q-item-label header>Neste busser</q-item-label>
+      <q-separator />
+      <q-btn-dropdown class="q-py-sm route-select" flat persistent align="left">
+        <template v-slot:label>
+          <span class="q-pr-sm"> Viser </span>
 
+          <q-chip
+            size="sm"
+            v-for="route in selectedRouteShortNames"
+            :key="route"
+            :style="busColorStyle(route)"
+          >
+            {{ route }}
+          </q-chip>
+        </template>
+        <q-list v-if="quay?.routes">
+          <q-item v-for="route in quay.routes" :key="route.id">
+            <q-checkbox v-model="selectedRoutes" :val="route.id">
+              <strong>
+                {{ route.short_name }}
+              </strong>
+              |
+              {{ route.name }}
+            </q-checkbox>
+          </q-item>
+        </q-list>
+      </q-btn-dropdown>
+
+      <q-separator />
       <DepartureItem
         :value="departure"
         v-for="departure in nextDepartures"
@@ -31,6 +45,8 @@ import { defineComponent } from 'vue';
 import { useAppStore } from '../stores/app-store';
 import { QuayAugmented } from 'types/QuayAugmented';
 import DepartureItem from '../components/DepartureItem.vue';
+import uniqolor from 'uniqolor';
+import { busColorStyle } from '../helpers';
 
 export default defineComponent({
   name: 'QuayPage',
@@ -38,6 +54,7 @@ export default defineComponent({
   setup() {
     return {
       store: useAppStore(),
+      busColorStyle,
     };
   },
   data() {
@@ -86,11 +103,19 @@ export default defineComponent({
   },
 
   computed: {
+    selectedRouteShortNames() {
+      return this.quay?.routes
+        .filter((x) => this.selectedRoutes.includes(x.id))
+        .map((x) => x.short_name);
+    },
     selectedRoutes: {
       get() {
-        return (
-          (this.$route.query.routes as string)?.split(',').map(Number) ?? []
-        );
+        let routesString = this.$route.query.routes as string;
+        if (!routesString) {
+          return this.quay?.routes.map((x) => x.id) ?? [];
+        } else {
+          return `${routesString}`.split(',').map(Number) ?? [];
+        }
       },
       set(routeIds: number[]) {
         this.$router.replace({
@@ -108,4 +133,8 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.route-select {
+  width: 100%;
+}
+</style>

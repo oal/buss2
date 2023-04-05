@@ -63,6 +63,7 @@ pub async fn list(
         .select((journeys::id, Route::as_select(), EstimatedCall::as_select()))
         .filter(estimated_calls::quay_id.eq(params.quay))
         .filter(estimated_calls::expected_arrival_time.ge(now))
+        .order(estimated_calls::expected_arrival_time.asc())
         .into_boxed();
 
     if let Ok(routes) = params.routes() {

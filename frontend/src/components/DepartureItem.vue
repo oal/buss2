@@ -1,19 +1,17 @@
 <template>
   <q-item clickable v-ripple>
     <q-item-section avatar>
-      <q-avatar color="primary" text-color="white">
+      <q-avatar :style="busColorStyle(value.route.short_name)">
         {{ value.route.short_name }}
       </q-avatar>
     </q-item-section>
 
     <q-item-section>
-      <q-item-label lines="1"
-        >{{ timeUntilDeparture }}
-        {{ value.estimated_call.expected_departure_time }}</q-item-label
-      >
+      <q-item-label lines="1"> Om {{ timeUntilDeparture }} </q-item-label>
       <q-item-label caption lines="2">
-        <template v-if="lateBy"> {{ lateBy }} forsinket </template>
-        <template v-else-if="showOnTime"> I rute </template>
+        <template v-if="lateBy"> {{ lateBy }} forsinket, </template>
+        <template v-else-if="showOnTime"> I rute, </template>
+        {{ formattedDepartureTime }}
       </q-item-label>
     </q-item-section>
   </q-item>
@@ -25,6 +23,8 @@ import { Journey } from 'types/Journey';
 import formatDistanceToNow from 'date-fns/formatDistanceToNow';
 import formatDistance from 'date-fns/formatDistance';
 import differenceInHours from 'date-fns/differenceInHours';
+import format from 'date-fns/format';
+import { busColorStyle } from '../helpers';
 
 const parseTimeOrNull = (time: string | null) => (time ? new Date(time) : null);
 
@@ -35,6 +35,11 @@ export default defineComponent({
       type: Object as PropType<Journey>,
       required: true,
     },
+  },
+  setup() {
+    return {
+      busColorStyle,
+    };
   },
 
   computed: {
@@ -74,6 +79,12 @@ export default defineComponent({
         new Date(expectedDepartureTime),
         new Date(targetDepartureTime)
       );
+    },
+
+    formattedDepartureTime() {
+      return this.expectedDepartureTime
+        ? format(this.expectedDepartureTime, 'HH:mm')
+        : '';
     },
   },
 });

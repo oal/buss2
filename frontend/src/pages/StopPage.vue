@@ -24,7 +24,7 @@
                   clickable
                   @click="onRouteClick(quay.id, route.id)"
                 >
-                  <q-avatar color="primary" text-color="white">
+                  <q-avatar :style="busColorStyle(route.short_name)">
                     {{ route.short_name }}
                   </q-avatar>
                   {{ route.name }}
@@ -62,6 +62,7 @@ import { useAppStore } from 'stores/app-store.ts';
 import { defineComponent } from 'vue';
 import { QuayAugmented } from 'types/QuayAugmented';
 import { StopWithQuays } from 'types/StopWithQuays';
+import { busColorStyle } from '../helpers';
 
 export default defineComponent({
   name: 'StopPage',
@@ -69,6 +70,7 @@ export default defineComponent({
   setup() {
     return {
       store: useAppStore(),
+      busColorStyle,
     };
   },
   async created() {

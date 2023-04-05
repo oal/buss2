@@ -21,6 +21,11 @@ const routes: RouteRecordRaw[] = [
         name: 'Quay',
         component: () => import('pages/QuayPage.vue'),
       },
+      {
+        path: 'journey/:id',
+        name: 'Journey',
+        component: () => import('pages/JourneyPage.vue'),
+      },
     ],
   },
 

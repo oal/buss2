@@ -1,4 +1,4 @@
-use axum::extract::{Query, State};
+use axum::extract::{Path, Query, State};
 use axum::Json;
 use axum::response::IntoResponse;
 use chrono::{DateTime, Utc};
@@ -9,6 +9,7 @@ use ts_rs::TS;
 use crate::db::DbPool;
 use crate::models::{Route};
 use crate::schema::estimated_calls;
+use crate::schema::quays;
 
 #[derive(Deserialize)]
 pub struct JourneyListParams {
@@ -34,6 +35,7 @@ impl JourneyListParams {
 #[diesel(table_name = estimated_calls)]
 #[ts(export)]
 struct EstimatedCall {
+    id: i32,
     target_arrival_time: Option<DateTime<Utc>>,
     expected_arrival_time: Option<DateTime<Utc>>,
     target_departure_time: Option<DateTime<Utc>>,
@@ -42,7 +44,7 @@ struct EstimatedCall {
 
 #[derive(Queryable, Serialize, TS)]
 #[ts(export)]
-struct Journey {
+struct Departure {
     id: i32,
     route: Route,
     estimated_call: EstimatedCall,
@@ -57,7 +59,7 @@ pub async fn list(
 
     use crate::schema::journeys;
     use crate::schema::routes;
-    let mut journies_query = journeys::table
+    let mut departures_query = journeys::table
         .inner_join(routes::table)
         .inner_join(estimated_calls::table)
         .select((journeys::id, Route::as_select(), EstimatedCall::as_select()))
@@ -67,13 +69,69 @@ pub async fn list(
         .into_boxed();
 
     if let Ok(routes) = params.routes() {
-        journies_query = journies_query.filter(journeys::route_id.eq_any(routes));
+        departures_query = departures_query.filter(journeys::route_id.eq_any(routes));
     }
 
-    let journies = journies_query
-        .load::<Journey>(&mut connection)
+    let departures = departures_query
+        .load::<Departure>(&mut connection)
         .await
         .unwrap();
 
-    Json(journies)
+    Json(departures)
+}
+
+#[derive(Queryable, Selectable, Serialize)]
+#[diesel(table_name = quays)]
+struct Quay {
+    id: i32,
+    name: String,
+}
+
+#[derive(Queryable, Serialize)]
+struct EstimatedCallWithQuay {
+    #[serde(flatten)]
+    estimated_call: EstimatedCall,
+    quay: Quay,
+}
+
+#[derive(Queryable, Serialize)]
+struct Journey {
+    id: i32,
+    route: Route,
+    estimated_calls: Vec<EstimatedCallWithQuay>,
+}
+
+pub async fn show(
+    State(pool): State<DbPool>,
+    Path(_id): Path<i32>,
+) -> impl IntoResponse {
+    let mut connection = pool.get().await.unwrap();
+
+    let (_journey_id, route) = {
+        use crate::schema::journeys::dsl::*;
+        journeys.find(_id)
+            .inner_join(crate::schema::routes::table)
+            .select((id, Route::as_select()))
+            .first::<(i32, Route)>(&mut connection)
+            .await
+            .unwrap()
+    };
+
+    let calls = {
+        use crate::schema::estimated_calls::dsl::*;
+        estimated_calls
+            .filter(journey_id.eq(_id))
+            .inner_join(quays::table)
+            .select((EstimatedCall::as_select(), Quay::as_select()))
+            .order(order_in_journey.asc())
+            .load::<EstimatedCallWithQuay>(&mut connection)
+            .await
+            .unwrap()
+    };
+
+    Json(Journey {
+        id: _journey_id,
+        route,
+        estimated_calls: calls,
+    })
 }

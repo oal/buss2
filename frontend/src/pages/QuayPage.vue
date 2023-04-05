@@ -1,7 +1,6 @@
 <template>
   <q-page>
-    <div v-if="quay"></div>
-    <q-list>
+    <q-list v-if="quay">
       <q-item-label header>Neste busser</q-item-label>
       <q-separator />
       <q-btn-dropdown class="q-py-sm route-select" flat persistent align="left">
@@ -17,7 +16,7 @@
             {{ route }}
           </q-chip>
         </template>
-        <q-list v-if="quay?.routes">
+        <q-list>
           <q-item v-for="route in quay.routes" :key="route.id">
             <q-checkbox v-model="selectedRoutes" :val="route.id">
               <strong>
@@ -35,6 +34,7 @@
         :value="departure"
         v-for="departure in nextDepartures"
         :key="departure.id"
+        :quay-id="quay.id"
       ></DepartureItem>
     </q-list>
   </q-page>

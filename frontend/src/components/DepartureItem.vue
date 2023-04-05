@@ -1,5 +1,15 @@
 <template>
-  <q-item clickable v-ripple>
+  <q-item
+    clickable
+    v-ripple
+    @click="
+      $router.push({
+        name: 'Journey',
+        params: { id: value.id },
+        query: { quay: quayId },
+      })
+    "
+  >
     <q-item-section avatar>
       <q-avatar :style="busColorStyle(value.route.short_name)">
         {{ value.route.short_name }}
@@ -33,6 +43,10 @@ export default defineComponent({
   props: {
     value: {
       type: Object as PropType<Journey>,
+      required: true,
+    },
+    quayId: {
+      type: Number,
       required: true,
     },
   },

@@ -15,3 +15,6 @@ export const busColorStyle = (routeNumber: string) => {
     color: generated.isLight ? '#000' : '#fff',
   };
 };
+
+export const parseTimeOrNull = (time: string | null) =>
+  time ? new Date(time) : null;

@@ -5,24 +5,26 @@
     :id="`time-entry-${estimatedCall.id}`"
     v-ripple
     @click="onClick"
+    class="timeline-entry"
   >
-    <template v-slot:subtitle>
-      <template v-if="isPast">Var </template>
-      <FormattedDelay :estimated-call="estimatedCall" />
-      ved
-    </template>
-
     <template v-slot:title>
       <div class="flex justify-between">
-        <span class="flex flex-center q-pr-sm">
+        <div>
           {{ estimatedCall.quay.name }}
-        </span>
+
+          <div class="timeline-entry__delay">
+            <template v-if="isPast">Var </template>
+            <FormattedDelay :estimated-call="estimatedCall" />
+          </div>
+        </div>
+
         <div>
           <q-chip
             disable
             dark
             square
             size="sm"
+            class="q-my-none"
             v-if="
               targetDepartureTime &&
               formattedTargetDepartureTime !== formattedExpectedDepartureTime
@@ -35,6 +37,7 @@
             dark
             square
             v-if="expectedDepartureTime"
+            class="q-my-none q-mr-none"
           >
             {{ formattedExpectedDepartureTime }}
           </q-chip>
@@ -94,3 +97,16 @@ export default defineComponent({
   },
 });
 </script>
+
+<style lang="scss">
+.timeline-entry {
+}
+.timeline-entry__delay {
+  font-size: 0.8rem;
+  font-weight: normal;
+
+  &:first-letter {
+    text-transform: uppercase;
+  }
+}
+</style>

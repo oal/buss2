@@ -111,6 +111,8 @@ export default defineComponent({
         return null;
 
       const previous = this.journey?.estimated_calls[indexOfCurrentEntry - 1];
+      if (typeof previous === 'undefined') return null;
+
       return { previous, next };
     },
   },

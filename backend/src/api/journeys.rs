@@ -80,21 +80,24 @@ pub async fn list(
     Json(departures)
 }
 
-#[derive(Queryable, Selectable, Serialize)]
+#[derive(Queryable, Selectable, Serialize, TS)]
 #[diesel(table_name = quays)]
+#[ts(export)]
 struct Quay {
     id: i32,
     name: String,
 }
 
-#[derive(Queryable, Serialize)]
+#[derive(Queryable, Serialize, TS)]
+#[ts(export)]
 struct EstimatedCallWithQuay {
     #[serde(flatten)]
     estimated_call: EstimatedCall,
     quay: Quay,
 }
 
-#[derive(Queryable, Serialize)]
+#[derive(Queryable, Serialize, TS)]
+#[ts(export)]
 struct Journey {
     id: i32,
     route: Route,

@@ -1,18 +1,8 @@
 <template>
-  <q-item
-    clickable
-    v-ripple
-    @click="
-      $router.push({
-        name: 'Journey',
-        params: { id: value.id },
-        query: { quay: quayId },
-      })
-    "
-  >
+  <q-item clickable v-ripple @click="onClick">
     <q-item-section avatar>
-      <q-avatar :style="busColorStyle(value.route.short_name)">
-        {{ value.route.short_name }}
+      <q-avatar :style="busColorStyle(route.short_name)">
+        {{ route.short_name }}
       </q-avatar>
     </q-item-section>
 
@@ -29,24 +19,31 @@
 
 <script lang="ts">
 import { defineComponent, PropType } from 'vue';
-import { Journey } from 'types/Journey';
 import formatDistanceToNow from 'date-fns/formatDistanceToNow';
 import formatDistance from 'date-fns/formatDistance';
 import differenceInHours from 'date-fns/differenceInHours';
 import format from 'date-fns/format';
 import { busColorStyle } from '../helpers';
+import { EstimatedCall } from 'types/EstimatedCall';
+import { Route } from 'types/Route';
 
 const parseTimeOrNull = (time: string | null) => (time ? new Date(time) : null);
 
 export default defineComponent({
   name: 'DepartureItem',
   props: {
-    value: {
-      type: Object as PropType<Journey>,
-      required: true,
+    journeyId: {
+      type: Number,
     },
     quayId: {
       type: Number,
+    },
+    estimatedCall: {
+      type: Object as PropType<EstimatedCall>,
+      required: true,
+    },
+    route: {
+      type: Object as PropType<Route>,
       required: true,
     },
   },
@@ -56,13 +53,24 @@ export default defineComponent({
     };
   },
 
+  methods: {
+    onClick() {
+      if (!this.quayId || !this.journeyId) return;
+      this.$router.push({
+        name: 'Journey',
+        params: { id: this.journeyId },
+        query: { quay: this.quayId },
+      });
+    },
+  },
+
   computed: {
     expectedDepartureTime() {
-      return parseTimeOrNull(this.value.estimated_call.expected_departure_time);
+      return parseTimeOrNull(this.estimatedCall.expected_departure_time);
     },
 
     targetDepartureTime() {
-      return parseTimeOrNull(this.value.estimated_call.expected_departure_time);
+      return parseTimeOrNull(this.estimatedCall.expected_departure_time);
     },
 
     timeUntilDeparture() {
@@ -79,9 +87,8 @@ export default defineComponent({
     },
 
     lateBy() {
-      let expectedDepartureTime =
-        this.value.estimated_call.expected_departure_time;
-      let targetDepartureTime = this.value.estimated_call.target_departure_time;
+      let expectedDepartureTime = this.estimatedCall.expected_departure_time;
+      let targetDepartureTime = this.estimatedCall.target_departure_time;
       if (
         expectedDepartureTime === targetDepartureTime ||
         !expectedDepartureTime ||

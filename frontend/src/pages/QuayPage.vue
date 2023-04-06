@@ -31,7 +31,9 @@
 
       <q-separator />
       <DepartureItem
-        :value="departure"
+        :journey-id="departure.id"
+        :estimated-call="departure.estimated_call"
+        :route="departure.route"
         v-for="departure in nextDepartures"
         :key="departure.id"
         :quay-id="quay.id"
@@ -45,7 +47,6 @@ import { defineComponent } from 'vue';
 import { useAppStore } from '../stores/app-store';
 import { QuayAugmented } from 'types/QuayAugmented';
 import DepartureItem from '../components/DepartureItem.vue';
-import uniqolor from 'uniqolor';
 import { busColorStyle } from '../helpers';
 
 export default defineComponent({

@@ -3,6 +3,8 @@
     :data-is-past="isPast"
     :color="isPast ? 'gray' : 'primary'"
     :id="`time-entry-${estimatedCall.id}`"
+    v-ripple
+    @click="onClick"
   >
     <template v-slot:subtitle>
       <template v-if="isPast">Var </template>
@@ -15,14 +17,28 @@
         <span class="flex flex-center q-pr-sm">
           {{ estimatedCall.quay.name }}
         </span>
-        <q-chip
-          :color="!isPast ? 'primary' : undefined"
-          dark
-          square
-          v-if="expectedDepartureTime"
-        >
-          {{ formattedExpectedDepartureTime }}
-        </q-chip>
+        <div>
+          <q-chip
+            disable
+            dark
+            square
+            size="sm"
+            v-if="
+              targetDepartureTime &&
+              formattedTargetDepartureTime !== formattedExpectedDepartureTime
+            "
+          >
+            <s>{{ formattedTargetDepartureTime }}</s>
+          </q-chip>
+          <q-chip
+            :color="!isPast ? 'primary' : undefined"
+            dark
+            square
+            v-if="expectedDepartureTime"
+          >
+            {{ formattedExpectedDepartureTime }}
+          </q-chip>
+        </div>
       </div>
     </template>
   </q-timeline-entry>
@@ -45,7 +61,23 @@ export default defineComponent({
     },
   },
 
+  methods: {
+    onClick() {
+      this.$router.push({
+        name: 'Quay',
+        params: { id: this.estimatedCall.quay.id },
+      });
+    },
+  },
   computed: {
+    targetDepartureTime() {
+      return parseTimeOrNull(this.estimatedCall.target_departure_time);
+    },
+    formattedTargetDepartureTime() {
+      return this.targetDepartureTime
+        ? format(this.targetDepartureTime, 'HH:mm')
+        : null;
+    },
     expectedDepartureTime() {
       return parseTimeOrNull(this.estimatedCall.expected_departure_time);
     },
@@ -62,5 +94,3 @@ export default defineComponent({
   },
 });
 </script>
-
-<style lang="scss" scoped></style>

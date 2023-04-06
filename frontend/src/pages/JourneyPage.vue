@@ -1,14 +1,28 @@
 <template>
-  <q-page>
-    <q-timeline ref="timeline" class="q-px-md">
-      <template v-if="journey">
-        <JourneyTimelineEntry
-          :estimated-call="call"
-          v-for="call in journey.estimated_calls"
-          :key="call.id"
-        />
-      </template>
-    </q-timeline>
+  <q-page class="journey-page">
+    <q-banner
+      class="bg-secondary text-white q-py-md"
+      v-if="journey && !hasStarted"
+    >
+      Denne ruten har ikke startet enda. Estimerte tider kan endre seg.
+    </q-banner>
+    <div v-if="previousAndNextStop">
+      <StopProgress
+        :previous="previousAndNextStop.previous"
+        :next="previousAndNextStop.next"
+      />
+    </div>
+    <q-scroll-area class="journey-timeline">
+      <q-timeline ref="timeline" class="journey-timeline__list q-px-md">
+        <template v-if="journey">
+          <JourneyTimelineEntry
+            :estimated-call="call"
+            v-for="call in journey.estimated_calls"
+            :key="call.id"
+          />
+        </template>
+      </q-timeline>
+    </q-scroll-area>
   </q-page>
 </template>
 
@@ -17,10 +31,11 @@ import { Journey } from 'types/Journey';
 import { defineComponent, nextTick } from 'vue';
 import { useAppStore } from '../stores/app-store';
 import JourneyTimelineEntry from '../components/JourneyTimelineEntry.vue';
+import StopProgress from '../components/StopProgress.vue';
 
 export default defineComponent({
   name: 'JourneyPage',
-  components: { JourneyTimelineEntry },
+  components: { StopProgress, JourneyTimelineEntry },
   setup() {
     return {
       store: useAppStore(),
@@ -28,8 +43,10 @@ export default defineComponent({
     };
   },
   async created() {
+    this.$q.loading.show();
     await this.loadData();
     this.store.setAppTitle(this.journey?.route.name ?? 'Reise');
+    this.$q.loading.hide();
     this.refreshInterval = setInterval(this.loadData, 5000);
   },
   beforeUnmount() {
@@ -42,8 +59,10 @@ export default defineComponent({
     };
   },
   watch: {
-    journey: {
-      handler: 'scrollToCurrent',
+    journey() {
+      setTimeout(() => {
+        this.scrollToCurrent();
+      }, 500);
     },
   },
   methods: {
@@ -52,7 +71,6 @@ export default defineComponent({
         .get<Journey>(`/api/journeys/${this.$route.params.id}`)
         .then((response) => {
           this.journey = response.data;
-          this.scrollToCurrent();
         })
         .catch((error) => {
           console.log(error);
@@ -63,13 +81,55 @@ export default defineComponent({
       let pastStops = this.$refs.timeline?.$el.querySelectorAll(
         '[data-is-past=true]'
       );
-      let previousStop = pastStops?.[pastStops.length - 2];
+      let previousStop = pastStops?.[pastStops.length - 1];
       if (previousStop) {
         previousStop.scrollIntoView({ behavior: 'smooth' });
       }
     },
   },
+  computed: {
+    hasStarted() {
+      const firstTime = this.journey?.estimated_calls.find(
+        (call) => call.expected_departure_time
+      )?.expected_departure_time;
+      return firstTime && new Date(firstTime) < new Date();
+    },
+    previousAndNextStop() {
+      let now = new Date();
+      const next = this.journey?.estimated_calls.find((call) => {
+        let expectedDepartureTime = call.expected_departure_time;
+        return expectedDepartureTime && new Date(expectedDepartureTime) > now;
+      });
+
+      if (!next) return null;
+
+      const indexOfCurrentEntry = this.journey?.estimated_calls.indexOf(next);
+      if (
+        typeof indexOfCurrentEntry === 'undefined' ||
+        indexOfCurrentEntry <= 0
+      )
+        return null;
+
+      const previous = this.journey?.estimated_calls[indexOfCurrentEntry - 1];
+      return { previous, next };
+    },
+  },
 });
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss">
+.journey-page {
+  display: flex;
+  flex-direction: column;
+}
+.journey-timeline {
+  overflow-y: scroll;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+
+  .q-scrollarea__container {
+    flex-grow: 1;
+  }
+}
+</style>

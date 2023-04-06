@@ -138,3 +138,63 @@ pub async fn show(
         estimated_calls: calls,
     })
 }
+
+#[derive(Deserialize)]
+pub struct FavoritesQuery {
+    ids: String
+}
+
+#[derive(Serialize)]
+pub struct FavoritePair {
+    route: i32,
+    quay: i32,
+}
+
+impl FavoritesQuery {
+    pub fn route_quay_pairs(&self) -> anyhow::Result<Vec<FavoritePair>> {
+        let ids = self.ids
+            .split(',')
+            .filter_map(|route| {
+                let mut parts = route.split('|');
+                let route = parts.next();
+                let quay = parts.next();
+                if let (Some(route), Some(quay)) = (route, quay) {
+                    let route = route.parse::<i32>().ok();
+                    let quay = quay.parse::<i32>().ok();
+                    if let (Some(route), Some(quay)) = (route, quay) {
+                        Some(FavoritePair {route, quay})
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                }
+            })
+            .collect();
+        Ok(ids)
+    }
+}
+
+pub async fn favorites(
+    State(pool): State<DbPool>,
+    Query(params): Query<FavoritesQuery>,
+) -> impl IntoResponse {
+    // let mut connection = pool.get().await.unwrap();
+
+    let pairs = params.route_quay_pairs().unwrap();
+
+    // use crate::schema::journeys;
+    // use crate::schema::routes;
+    // let departures = journeys::table
+    //     .inner_join(routes::table)
+    //     .inner_join(estimated_calls::table)
+    //     .select((journeys::id, Route::as_select(), EstimatedCall::as_select()))
+    //     .filter(estimated_calls::quay_id.eq(1))
+    //     .filter(estimated_calls::expected_arrival_time.ge(Utc::now()))
+    //     .order(estimated_calls::expected_arrival_time.asc())
+    //     .load::<Departure>(&mut connection)
+    //     .await
+    //     .unwrap();
+
+    Json(pairs)
+}

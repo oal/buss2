@@ -12,6 +12,7 @@ pub async fn api_router(pool: DbPool) -> Router {
         .route("/stops/:id", get(stops::show))
         .route("/quays/:id", get(quays::show))
         .route("/journeys", get(journeys::list))
+        .route("/journeys/favorites", get(journeys::favorites))
         .route("/journeys/:id", get(journeys::show))
         .with_state(pool)
 }

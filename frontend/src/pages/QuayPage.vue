@@ -37,6 +37,8 @@
         v-for="departure in nextDepartures"
         :key="departure.id"
         :quay-id="quay.id"
+        :is-favorite="Boolean(favoriteRoutes[departure.route.id])"
+        @toggle:favorite="toggleFavorite(departure.route.id)"
       ></DepartureItem>
     </q-list>
   </q-page>
@@ -48,6 +50,7 @@ import { useAppStore } from '../stores/app-store';
 import { QuayAugmented } from 'types/QuayAugmented';
 import DepartureItem from '../components/DepartureItem.vue';
 import { busColorStyle } from '../helpers';
+import db from '../db';
 
 export default defineComponent({
   name: 'QuayPage',
@@ -62,12 +65,16 @@ export default defineComponent({
     return {
       quay: null as QuayAugmented | null,
       nextDepartures: [],
+      favoriteRoutes: {} as Record<number, number>,
     };
   },
   async created() {
+    this.$q.loading.show();
     await this.loadData();
     this.store.setAppTitle(this.quay?.name ?? 'Busstopp');
     await this.loadDepartures();
+    await this.loadFavorites();
+    this.$q.loading.hide();
   },
   methods: {
     loadData() {
@@ -94,6 +101,36 @@ export default defineComponent({
         .catch((error) => {
           console.log(error);
         });
+    },
+    loadFavorites() {
+      if (!this.quay) return;
+      return db.favorites
+        .where('quayId')
+        .equals(this.quay.id)
+        .toArray()
+        .then((favorites) => {
+          this.favoriteRoutes = favorites.reduce(
+            (acc, favorite) => ({
+              ...acc,
+              [favorite.routeId]: favorite.id,
+            }),
+            {}
+          );
+        });
+    },
+    async toggleFavorite(routeId: number) {
+      if (!this.quay) return;
+
+      let favoriteId = this.favoriteRoutes[routeId];
+      if (favoriteId) {
+        await db.favorites.delete(favoriteId);
+        delete this.favoriteRoutes[routeId];
+      } else {
+        this.favoriteRoutes[routeId] = await db.favorites.add({
+          routeId,
+          quayId: this.quay.id,
+        });
+      }
     },
   },
 

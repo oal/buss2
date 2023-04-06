@@ -13,6 +13,17 @@
         {{ formattedDepartureTime }}
       </q-item-label>
     </q-item-section>
+
+    <q-item-section side v-if="typeof isFavorite !== 'undefined'">
+      <q-btn
+        round
+        flat
+        :loading="favoriteSaving"
+        :icon="isFavorite ? 'favorite' : 'favorite_border'"
+        :color="isFavorite ? 'red-10' : 'grey'"
+        @click.stop="onToggleFavorite"
+      ></q-btn>
+    </q-item-section>
   </q-item>
 </template>
 
@@ -35,6 +46,10 @@ export default defineComponent({
     quayId: {
       type: Number,
     },
+    isFavorite: {
+      type: Boolean,
+      default: undefined,
+    },
     estimatedCall: {
       type: Object as PropType<EstimatedCall>,
       required: true,
@@ -50,6 +65,12 @@ export default defineComponent({
     };
   },
 
+  data() {
+    return {
+      favoriteSaving: false,
+    };
+  },
+
   methods: {
     onClick() {
       if (!this.quayId || !this.journeyId) return;
@@ -58,6 +79,18 @@ export default defineComponent({
         params: { id: this.journeyId },
         query: { quay: this.quayId },
       });
+    },
+    onToggleFavorite() {
+      this.favoriteSaving = true;
+      setTimeout(() => {
+        this.favoriteSaving = false;
+      }, 1000);
+      this.$emit('toggle:favorite');
+    },
+  },
+  watch: {
+    isFavorite() {
+      this.favoriteSaving = false;
     },
   },
 

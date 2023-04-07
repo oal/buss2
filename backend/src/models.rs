@@ -20,6 +20,14 @@ pub struct Quay {
     pub stop_id: i32,
 }
 
+#[derive(Queryable, Selectable, Serialize, TS)]
+#[diesel(table_name = quays)]
+#[ts(export)]
+pub struct SimpleQuay {
+    id: i32,
+    name: String,
+}
+
 #[derive(Queryable, Insertable, Identifiable, Selectable, Serialize, TS, Debug)]
 #[diesel(table_name = stops)]
 #[ts(export)]
@@ -69,9 +77,10 @@ pub struct NewEstimatedCall {
     pub expected_departure_time: Option<DateTime<Utc>>,
 }
 
-#[derive(Identifiable, Queryable, Selectable, Associations, Serialize, Debug)]
+#[derive(Identifiable, Queryable, Selectable, Associations, Serialize, TS, Debug)]
 #[diesel(belongs_to(Quay))]
 #[diesel(table_name = estimated_calls)]
+#[ts(export)]
 pub struct EstimatedCall {
     pub id: i32,
     pub quay_id: i32,

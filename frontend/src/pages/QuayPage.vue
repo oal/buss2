@@ -55,6 +55,7 @@ import { QuayAugmented } from 'types/QuayAugmented';
 import DepartureItem from '../components/DepartureItem.vue';
 import { busColorStyle } from '../helpers';
 import db from '../db';
+import { Departure } from 'types/Departure';
 
 export default defineComponent({
   name: 'QuayPage',
@@ -123,7 +124,7 @@ export default defineComponent({
         });
     },
 
-    onDepartureClick(departure: any) {
+    onDepartureClick(departure: Departure) {
       if (!this.quay) return;
 
       this.$router.push({

@@ -1,13 +1,13 @@
 use axum::extract::{Path, Query, State};
 use axum::Json;
 use axum::response::IntoResponse;
-use chrono::{DateTime, Duration, Utc};
+use chrono::{DateTime, Utc};
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 use serde::{Serialize, Deserialize};
 use ts_rs::TS;
 use crate::db::DbPool;
-use crate::models::{Route};
+use crate::models::{Route, SimpleQuay};
 use crate::schema::estimated_calls;
 use crate::schema::quays;
 
@@ -80,20 +80,13 @@ pub async fn list(
     Json(departures)
 }
 
-#[derive(Queryable, Selectable, Serialize, TS)]
-#[diesel(table_name = quays)]
-#[ts(export)]
-struct Quay {
-    id: i32,
-    name: String,
-}
 
 #[derive(Queryable, Serialize, TS)]
 #[ts(export)]
 struct EstimatedCallWithQuay {
     #[serde(flatten)]
     estimated_call: EstimatedCall,
-    quay: Quay,
+    quay: SimpleQuay,
 }
 
 #[derive(Queryable, Serialize, TS)]
@@ -125,7 +118,7 @@ pub async fn show(
         estimated_calls
             .filter(journey_id.eq(_id))
             .inner_join(quays::table)
-            .select((EstimatedCall::as_select(), Quay::as_select()))
+            .select((EstimatedCall::as_select(), SimpleQuay::as_select()))
             .order(order_in_journey.asc())
             .load::<EstimatedCallWithQuay>(&mut connection)
             .await
@@ -137,96 +130,4 @@ pub async fn show(
         route,
         estimated_calls: calls,
     })
-}
-
-#[derive(Deserialize)]
-pub struct FavoritesQuery {
-    ids: String,
-}
-
-#[derive(Serialize)]
-pub struct FavoritePair {
-    route: i32,
-    quay: i32,
-}
-
-impl FavoritesQuery {
-    pub fn route_quay_pairs(&self) -> anyhow::Result<Vec<FavoritePair>> {
-        let ids = self.ids
-            .split(',')
-            .filter_map(|route| {
-                let mut parts = route.split('|');
-                let quay = parts.next();
-                let route = parts.next();
-                if let (Some(route), Some(quay)) = (route, quay) {
-                    let route = route.parse::<i32>().ok();
-                    let quay = quay.parse::<i32>().ok();
-                    if let (Some(route), Some(quay)) = (route, quay) {
-                        Some(FavoritePair { route, quay })
-                    } else {
-                        None
-                    }
-                } else {
-                    None
-                }
-            })
-            .collect();
-        Ok(ids)
-    }
-}
-
-#[derive(Serialize)]
-struct FavoriteResult {
-    journey_id: i32,
-    route: Route,
-    quay: Quay,
-    estimated_call: EstimatedCall,
-}
-
-pub async fn favorites(
-    State(pool): State<DbPool>,
-    Query(params): Query<FavoritesQuery>,
-) -> impl IntoResponse {
-    let mut connection = pool.get().await.unwrap();
-
-    let mut pairs = params.route_quay_pairs().unwrap();
-
-    use crate::schema::journeys;
-    use crate::schema::estimated_calls;
-    use crate::schema::routes;
-    let now = Utc::now();
-    let in_an_hour = now + Duration::hours(1);
-
-    let mut results = Vec::new();
-    for pair in pairs {
-        let favorite = estimated_calls::table
-            .inner_join(journeys::table.inner_join(routes::table))
-            .inner_join(quays::table)
-            .filter(journeys::route_id.eq(pair.route).and(estimated_calls::quay_id.eq(pair.quay)))
-            .filter(estimated_calls::expected_arrival_time.ge(now))
-            .filter(estimated_calls::expected_arrival_time.le(in_an_hour))
-            .select((journeys::id, EstimatedCall::as_select(), Quay::as_select(), Route::as_select()))
-            .order(estimated_calls::expected_arrival_time.asc())
-            .load::<(i32, EstimatedCall, Quay, Route)>(&mut connection)
-            .await
-            .unwrap();
-        results.push(favorite);
-    }
-
-    let mut results = results
-        .into_iter()
-        .flatten()
-        .map(|tuple| FavoriteResult {
-            journey_id: tuple.0,
-            route: tuple.3,
-            quay: tuple.2,
-            estimated_call: tuple.1,
-        })
-        .collect::<Vec<_>>();
-
-    results.sort_by(|a, b| {
-        a.estimated_call.expected_arrival_time.cmp(&b.estimated_call.expected_arrival_time)
-    });
-
-    Json(results)
 }

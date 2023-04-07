@@ -24,6 +24,7 @@ import { defineComponent } from 'vue';
 import db from '../db';
 import DepartureItem from '../components/DepartureItem.vue';
 import { useAppStore } from '../stores/app-store';
+import { FavoriteResult } from 'types/FavoriteResult';
 
 export default defineComponent({
   name: 'IndexPage',
@@ -47,7 +48,7 @@ export default defineComponent({
   methods: {
     async loadData() {
       const favorites = await db.favorites.toArray();
-      const response = await this.$axios.get('/api/journeys/favorites', {
+      const response = await this.$axios.get('/api/favorites', {
         params: {
           ids: favorites
             .map((favorite) => `${favorite.quayId}|${favorite.routeId}`)
@@ -60,7 +61,7 @@ export default defineComponent({
       await this.loadData();
       done();
     },
-    onFavoriteClick(favorite: any) {
+    onFavoriteClick(favorite: FavoriteResult) {
       this.$router.push({
         name: 'Journey',
         params: { id: favorite.journey_id },

@@ -9,12 +9,13 @@ import differenceInHours from 'date-fns/differenceInHours';
 import formatDistance from 'date-fns/formatDistance';
 import { EstimatedCall } from 'types/EstimatedCall';
 import { parseTimeOrNull } from '../helpers';
+import { EstimatedCallWithQuay } from 'types/EstimatedCallWithQuay';
 
 export default defineComponent({
   name: 'FormattedDelay',
   props: {
     estimatedCall: {
-      type: Object as PropType<EstimatedCall>,
+      type: Object as PropType<EstimatedCall | EstimatedCallWithQuay>,
       required: true,
     },
   },

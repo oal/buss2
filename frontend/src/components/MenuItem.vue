@@ -31,6 +31,7 @@ export default defineComponent({
 
     to: {
       type: Object,
+      default: undefined,
     },
 
     icon: {

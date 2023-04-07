@@ -1,17 +1,17 @@
 <template>
   <div>
     <q-input
-      filled
       v-model="search"
+      filled
       debounce="500"
       label="Søk etter stopp"
     ></q-input>
     <q-list bordered separator>
       <q-item
-        clickable
-        v-ripple
         v-for="stop in stops"
         :key="stop.id"
+        v-ripple
+        clickable
         :to="{ name: 'Stop', params: { id: stop.id } }"
       >
         <q-item-section>{{ stop.name }}</q-item-section>

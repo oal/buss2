@@ -4,11 +4,11 @@
       <q-pull-to-refresh @refresh="onRefresh">
         <q-list>
           <DepartureItem
+            v-for="favorite in favorites"
+            :key="favorite.journey_id"
             :estimated-call="favorite.estimated_call"
             :route="favorite.route"
             :quay="favorite.quay"
-            v-for="favorite in favorites"
-            :key="favorite.id"
             @click="onFavoriteClick(favorite)"
           >
             {{ favorite }}
@@ -32,6 +32,12 @@ export default defineComponent({
   setup() {
     return {
       store: useAppStore(),
+      refreshInterval: null as any,
+    };
+  },
+  data() {
+    return {
+      favorites: [] as FavoriteResult[],
     };
   },
   async created() {
@@ -39,22 +45,26 @@ export default defineComponent({
     this.store.setAppTitle('Buss');
     await this.loadData();
     this.$q.loading.hide();
+
+    this.refreshInterval = setInterval(this.loadData, 5000);
   },
-  data() {
-    return {
-      favorites: [],
-    };
+  beforeUnmount() {
+    clearInterval(this.refreshInterval);
+    this.refreshInterval = null;
   },
   methods: {
     async loadData() {
       const favorites = await db.favorites.toArray();
-      const response = await this.$axios.get('/api/favorites', {
-        params: {
-          ids: favorites
-            .map((favorite) => `${favorite.quayId}|${favorite.routeId}`)
-            .join(','),
-        },
-      });
+      const response = await this.$axios.get<FavoriteResult[]>(
+        '/api/favorites',
+        {
+          params: {
+            ids: favorites
+              .map((favorite) => `${favorite.quayId}|${favorite.routeId}`)
+              .join(','),
+          },
+        }
+      );
       this.favorites = response.data;
     },
     async onRefresh(done: () => void) {

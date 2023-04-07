@@ -1,8 +1,8 @@
 <template>
   <q-page class="inner-scroll-page">
     <q-banner
-      class="bg-secondary text-white q-py-md"
       v-if="journey && !hasStarted"
+      class="bg-secondary text-white q-py-md"
     >
       Denne ruten har ikke startet enda. Estimerte tider kan endre seg.
     </q-banner>
@@ -17,9 +17,9 @@
         <q-timeline ref="timeline" class="journey-timeline__list q-px-md">
           <template v-if="journey">
             <JourneyTimelineEntry
-              :estimated-call="call"
               v-for="call in journey.estimated_calls"
               :key="call.id"
+              :estimated-call="call"
             />
           </template>
         </q-timeline>
@@ -48,56 +48,11 @@ export default defineComponent({
       refreshInterval: null as any,
     };
   },
-  async created() {
-    this.$q.loading.show();
-    await this.loadData();
-    this.store.setAppTitle(this.journey?.route.name ?? 'Reise');
-    this.$q.loading.hide();
-    this.refreshInterval = setInterval(this.loadData, 5000);
-  },
-  beforeUnmount() {
-    clearInterval(this.refreshInterval);
-    this.refreshInterval = null;
-  },
   data() {
     return {
       journey: null as Journey | null,
       autoScroll: true,
     };
-  },
-  watch: {
-    journey() {
-      setTimeout(() => {
-        if (!this.autoScroll) return;
-        this.scrollToCurrent();
-      }, 500);
-    },
-  },
-  methods: {
-    loadData() {
-      return this.$axios
-        .get<Journey>(`/api/journeys/${this.$route.params.id}`)
-        .then((response) => {
-          this.journey = response.data;
-        })
-        .catch((error) => {
-          console.log(error);
-        });
-    },
-    async onRefresh(done: () => void) {
-      await this.loadData();
-      done();
-    },
-    async scrollToCurrent() {
-      await nextTick();
-      let pastStops = this.$refs.timeline?.$el.querySelectorAll(
-        '[data-is-past=true]'
-      );
-      let previousStop = pastStops?.[pastStops.length - 1];
-      if (previousStop) {
-        previousStop.scrollIntoView({ behavior: 'smooth' });
-      }
-    },
   },
   computed: {
     hasStarted() {
@@ -126,6 +81,51 @@ export default defineComponent({
       if (typeof previous === 'undefined') return null;
 
       return { previous, next };
+    },
+  },
+  watch: {
+    journey() {
+      setTimeout(() => {
+        if (!this.autoScroll) return;
+        this.scrollToCurrent();
+      }, 500);
+    },
+  },
+  async created() {
+    this.$q.loading.show();
+    await this.loadData();
+    this.store.setAppTitle(this.journey?.route.name ?? 'Reise');
+    this.$q.loading.hide();
+    this.refreshInterval = setInterval(this.loadData, 5000);
+  },
+  beforeUnmount() {
+    clearInterval(this.refreshInterval);
+    this.refreshInterval = null;
+  },
+  methods: {
+    loadData() {
+      return this.$axios
+        .get<Journey>(`/api/journeys/${this.$route.params.id}`)
+        .then((response) => {
+          this.journey = response.data;
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+    },
+    async onRefresh(done: () => void) {
+      await this.loadData();
+      done();
+    },
+    async scrollToCurrent() {
+      await nextTick();
+      let pastStops = this.$refs.timeline?.$el.querySelectorAll(
+        '[data-is-past=true]'
+      );
+      let previousStop = pastStops?.[pastStops.length - 1];
+      if (previousStop) {
+        previousStop.scrollIntoView({ behavior: 'smooth' });
+      }
     },
   },
 });

@@ -1,5 +1,5 @@
 <template>
-  <q-item class="departure-item" clickable v-ripple @click="$emit('click')">
+  <q-item v-ripple class="departure-item" clickable @click="$emit('click')">
     <q-item-section class="departure-item__route">
       <q-chip
         class="departure-item__route-tag"
@@ -22,7 +22,7 @@
       </q-item-label>
     </q-item-section>
 
-    <q-item-section side v-if="typeof isFavorite !== 'undefined'">
+    <q-item-section v-if="typeof isFavorite !== 'undefined'" side>
       <q-btn
         round
         flat
@@ -44,6 +44,7 @@ import { EstimatedCall } from 'types/EstimatedCall';
 import { Route } from 'types/Route';
 import FormattedDelay from './FormattedDelay.vue';
 import { Quay } from 'types/Quay';
+import { SimpleQuay } from 'types/SimpleQuay';
 
 export default defineComponent({
   name: 'DepartureItem',
@@ -54,7 +55,8 @@ export default defineComponent({
       default: undefined,
     },
     quay: {
-      type: Object as PropType<Quay>,
+      type: Object as PropType<Quay | SimpleQuay>,
+      default: null,
     },
     estimatedCall: {
       type: Object as PropType<EstimatedCall>,
@@ -65,6 +67,7 @@ export default defineComponent({
       required: true,
     },
   },
+  emits: ['toggle:favorite', 'click'],
   setup() {
     return {
       busColorStyle,
@@ -75,21 +78,6 @@ export default defineComponent({
     return {
       favoriteSaving: false,
     };
-  },
-
-  methods: {
-    onToggleFavorite() {
-      this.favoriteSaving = true;
-      setTimeout(() => {
-        this.favoriteSaving = false;
-      }, 1000);
-      this.$emit('toggle:favorite');
-    },
-  },
-  watch: {
-    isFavorite() {
-      this.favoriteSaving = false;
-    },
   },
 
   computed: {
@@ -107,6 +95,21 @@ export default defineComponent({
       return this.expectedDepartureTime
         ? format(this.expectedDepartureTime, 'HH:mm')
         : '';
+    },
+  },
+  watch: {
+    isFavorite() {
+      this.favoriteSaving = false;
+    },
+  },
+
+  methods: {
+    onToggleFavorite() {
+      this.favoriteSaving = true;
+      setTimeout(() => {
+        this.favoriteSaving = false;
+      }, 1000);
+      this.$emit('toggle:favorite');
     },
   },
 });

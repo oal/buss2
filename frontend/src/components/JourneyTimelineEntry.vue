@@ -1,13 +1,13 @@
 <template>
   <q-timeline-entry
-    :data-is-past="isPast"
-    :color="isPast ? 'gray' : 'primary'"
     :id="`time-entry-${estimatedCall.id}`"
     v-ripple
-    @click="onClick"
+    :data-is-past="isPast"
+    :color="isPast ? 'gray' : 'primary'"
     class="timeline-entry"
+    @click="onClick"
   >
-    <template v-slot:title>
+    <template #title>
       <div class="flex justify-between">
         <div>
           {{ estimatedCall.quay.name }}
@@ -20,23 +20,23 @@
 
         <div>
           <q-chip
+            v-if="
+              targetDepartureTime &&
+              formattedTargetDepartureTime !== formattedExpectedDepartureTime
+            "
             disable
             dark
             square
             size="sm"
             class="q-my-none"
-            v-if="
-              targetDepartureTime &&
-              formattedTargetDepartureTime !== formattedExpectedDepartureTime
-            "
           >
             <s>{{ formattedTargetDepartureTime }}</s>
           </q-chip>
           <q-chip
+            v-if="expectedDepartureTime"
             :color="!isPast ? 'primary' : undefined"
             dark
             square
-            v-if="expectedDepartureTime"
             class="q-my-none q-mr-none"
           >
             {{ formattedExpectedDepartureTime }}
@@ -63,15 +63,6 @@ export default defineComponent({
       required: true,
     },
   },
-
-  methods: {
-    onClick() {
-      this.$router.push({
-        name: 'Quay',
-        params: { id: this.estimatedCall.quay.id },
-      });
-    },
-  },
   computed: {
     targetDepartureTime() {
       return parseTimeOrNull(this.estimatedCall.target_departure_time);
@@ -93,6 +84,15 @@ export default defineComponent({
       const expected = this.expectedDepartureTime;
       if (!expected) return false;
       return new Date(expected) < new Date();
+    },
+  },
+
+  methods: {
+    onClick() {
+      this.$router.push({
+        name: 'Quay',
+        params: { id: this.estimatedCall.quay.id },
+      });
     },
   },
 });

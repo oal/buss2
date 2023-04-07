@@ -53,6 +53,19 @@ export default defineComponent({
     };
   },
 
+  computed: {
+    startTime() {
+      return parseTimeOrNull(this.previous.expected_departure_time);
+    },
+    endTime() {
+      return parseTimeOrNull(this.next.expected_departure_time);
+    },
+    diffInSeconds() {
+      if (!this.startTime || !this.endTime) return 0;
+      return (this.endTime.getTime() - this.startTime.getTime()) / 1000;
+    },
+  },
+
   mounted() {
     this.updateDiffFromNow();
     this.updateInterval = setInterval(this.updateDiffFromNow, 500);
@@ -72,19 +85,6 @@ export default defineComponent({
         this.diffInSeconds - (now.getTime() - this.startTime.getTime()) / 1000;
       this.progress = 1.0 - diff / this.diffInSeconds;
       if (this.progress > 1.0) this.progress = 0;
-    },
-  },
-
-  computed: {
-    startTime() {
-      return parseTimeOrNull(this.previous.expected_departure_time);
-    },
-    endTime() {
-      return parseTimeOrNull(this.next.expected_departure_time);
-    },
-    diffInSeconds() {
-      if (!this.startTime || !this.endTime) return 0;
-      return (this.endTime.getTime() - this.startTime.getTime()) / 1000;
     },
   },
 });

@@ -2,14 +2,14 @@
   <q-page v-if="stop">
     <l-map ref="map" v-model:zoom="zoom" :center="[stop.lat, stop.lon]">
       <l-marker
-        :lat-lng="[quay.lat, quay.lon]"
         v-for="quay in stop.quays"
         :key="quay.id"
+        :lat-lng="[quay.lat, quay.lon]"
         @click="loadQuay(quay.id)"
       >
         <l-popup :lat-lng="[quay.lat, quay.lon]">
           <q-spinner v-if="!quays[quay.id]" size="280px" />
-          <q-card flat v-else>
+          <q-card v-else flat>
             <q-card-section>
               <div role="heading" class="text-h6">
                 {{ quays[quay.id].name }}
@@ -34,11 +34,11 @@
             <q-separator />
             <q-card-actions>
               <q-btn
-                @click="onRouteClick(quay.id)"
                 label="Vis tider for stopp"
                 icon-right="arrow_forward"
                 color="primary"
                 flat
+                @click="onRouteClick(quay.id)"
               />
             </q-card-actions>
           </q-card>
@@ -73,10 +73,6 @@ export default defineComponent({
       busColorStyle,
     };
   },
-  async created() {
-    await this.loadData();
-    this.store.setAppTitle(this.stop?.name ?? 'Stopp');
-  },
   data() {
     return {
       stop: null as StopWithQuays | null,
@@ -84,7 +80,10 @@ export default defineComponent({
       quays: {} as Record<number, QuayAugmented>,
     };
   },
-
+  async created() {
+    await this.loadData();
+    this.store.setAppTitle(this.stop?.name ?? 'Stopp');
+  },
   methods: {
     loadData() {
       return this.$axios

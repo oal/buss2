@@ -3,13 +3,13 @@
     <q-list v-if="quay">
       <q-separator />
       <q-btn-dropdown class="q-py-sm route-select" flat persistent align="left">
-        <template v-slot:label>
+        <template #label>
           <span class="q-pr-sm"> Viser </span>
 
           <q-chip
-            size="sm"
             v-for="route in selectedRouteShortNames"
             :key="route"
+            size="sm"
             :style="busColorStyle(route)"
           >
             {{ route }}
@@ -34,10 +34,10 @@
       <q-pull-to-refresh @refresh="onRefresh">
         <q-list>
           <DepartureItem
-            :estimated-call="departure.estimated_call"
-            :route="departure.route"
             v-for="departure in nextDepartures"
             :key="departure.id"
+            :estimated-call="departure.estimated_call"
+            :route="departure.route"
             :is-favorite="Boolean(favoriteRoutes[departure.route.id])"
             @toggle:favorite="toggleFavorite(departure.route.id)"
             @click="onDepartureClick(departure)"
@@ -72,6 +72,41 @@ export default defineComponent({
       nextDepartures: [],
       favoriteRoutes: {} as Record<number, number>,
     };
+  },
+
+  computed: {
+    selectedRouteShortNames() {
+      return this.quay?.routes
+        .filter((x) => this.selectedRoutes.includes(x.id))
+        .map((x) => x.short_name);
+    },
+    selectedRoutes: {
+      get() {
+        let routesString = this.$route.query.routes as string;
+        if (!routesString) {
+          return this.quay?.routes.map((x) => x.id) ?? [];
+        } else {
+          return `${routesString}`.split(',').map(Number) ?? [];
+        }
+      },
+      set(routeIds: number[]) {
+        this.$router.replace({
+          ...this.$route,
+          query: {
+            routes: routeIds
+              .filter((x) => !!x)
+              .sort((a, b) => a - b)
+              .join(','),
+          },
+        });
+      },
+    },
+  },
+
+  watch: {
+    selectedRoutes() {
+      this.loadDepartures();
+    },
   },
   async created() {
     this.$q.loading.show();
@@ -150,41 +185,6 @@ export default defineComponent({
     async onRefresh(done: () => void) {
       await this.loadDepartures();
       done();
-    },
-  },
-
-  watch: {
-    selectedRoutes() {
-      this.loadDepartures();
-    },
-  },
-
-  computed: {
-    selectedRouteShortNames() {
-      return this.quay?.routes
-        .filter((x) => this.selectedRoutes.includes(x.id))
-        .map((x) => x.short_name);
-    },
-    selectedRoutes: {
-      get() {
-        let routesString = this.$route.query.routes as string;
-        if (!routesString) {
-          return this.quay?.routes.map((x) => x.id) ?? [];
-        } else {
-          return `${routesString}`.split(',').map(Number) ?? [];
-        }
-      },
-      set(routeIds: number[]) {
-        this.$router.replace({
-          ...this.$route,
-          query: {
-            routes: routeIds
-              .filter((x) => !!x)
-              .sort((a, b) => a - b)
-              .join(','),
-          },
-        });
-      },
     },
   },
 });

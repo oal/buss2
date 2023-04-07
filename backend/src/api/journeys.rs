@@ -54,11 +54,11 @@ pub async fn list(
     State(pool): State<DbPool>,
     Query(params): Query<JourneyListParams>,
 ) -> impl IntoResponse {
-    let mut connection = pool.get().await.unwrap();
     let now = Utc::now();
 
     use crate::schema::journeys;
     use crate::schema::routes;
+    let mut connection = pool.get().await.unwrap();
     let mut departures_query = journeys::table
         .inner_join(routes::table)
         .inner_join(estimated_calls::table)

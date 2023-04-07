@@ -2,6 +2,7 @@ use std::ops::Sub;
 use diesel::prelude::*;
 use diesel_async::{RunQueryDsl};
 use axum::extract::{Path, State};
+use axum::http::StatusCode;
 use axum::Json;
 use axum::response::IntoResponse;
 use chrono::{Utc};
@@ -13,7 +14,7 @@ use crate::models::Quay;
 
 #[derive(Queryable, Serialize, TS)]
 #[ts(export)]
-struct QuayAugmented {
+pub struct QuayAugmented {
     #[serde(flatten)]
     quay: Quay,
     routes: Vec<QuayRoute>,
@@ -22,15 +23,17 @@ struct QuayAugmented {
 pub(crate) async fn show(
     State(pool): State<DbPool>,
     Path(_id): Path<i32>,
-) -> impl IntoResponse {
-    let mut connection = pool.get().await.unwrap();
+) -> Result<impl IntoResponse, StatusCode> {
+    let mut connection = pool.get().await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    let quay = get_quay(&mut connection, _id).await.unwrap();
-    let routes = get_quay_routes(&mut connection, _id).await;
-    Json(QuayAugmented {
+    let quay = get_quay(&mut connection, _id).await
+        .map_err(|_| StatusCode::NOT_FOUND)?;
+
+    Ok(Json(QuayAugmented {
         quay,
-        routes,
-    })
+        routes: get_quay_routes(&mut connection, _id).await,
+    }))
 }
 
 async fn get_quay(connection: &mut DbConnection, _id: i32) -> Result<Quay, diesel::result::Error> {
@@ -40,7 +43,7 @@ async fn get_quay(connection: &mut DbConnection, _id: i32) -> Result<Quay, diese
 
 #[derive(Queryable, Serialize, TS)]
 #[ts(export)]
-struct QuayRoute {
+pub struct QuayRoute {
     id: i32,
     short_name: String,
     name: String,

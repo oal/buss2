@@ -1,4 +1,5 @@
 use axum::extract::{Query, State};
+use axum::http::StatusCode;
 use axum::Json;
 use axum::response::IntoResponse;
 use chrono::{Duration, Utc};
@@ -59,41 +60,47 @@ struct FavoriteResult {
 pub async fn list(
     State(pool): State<DbPool>,
     Query(params): Query<FavoritesQuery>,
-) -> impl IntoResponse {
+) -> Result<impl IntoResponse, StatusCode> {
     use crate::schema::journeys;
     use crate::schema::routes;
+
+    let pairs = params
+        .route_quay_pairs()
+        .unwrap_or(vec![]);
 
     let now = Utc::now();
     let in_an_hour = now + Duration::hours(1);
 
-    let pairs = params.route_quay_pairs().unwrap();
     let tasks = pairs.into_iter().map(|pair| {
         let pool = pool.clone();
         task::spawn(async move {
-            let mut connection = pool.get().await.unwrap();
-            estimated_calls::table
-                .inner_join(journeys::table.inner_join(routes::table))
-                .inner_join(quays::table)
-                .filter(journeys::route_id.eq(pair.route).and(estimated_calls::quay_id.eq(pair.quay)))
-                .filter(estimated_calls::expected_arrival_time.ge(now))
-                .filter(estimated_calls::expected_arrival_time.le(in_an_hour))
-                .select((journeys::id, EstimatedCall::as_select(), SimpleQuay::as_select(), Route::as_select()))
-                .order(estimated_calls::expected_arrival_time.asc())
-                .load::<(i32, EstimatedCall, SimpleQuay, Route)>(&mut connection)
-                .await
+            if let Ok(mut connection) = pool.get().await {
+                estimated_calls::table
+                    .inner_join(journeys::table.inner_join(routes::table))
+                    .inner_join(quays::table)
+                    .filter(journeys::route_id.eq(pair.route).and(estimated_calls::quay_id.eq(pair.quay)))
+                    .filter(estimated_calls::expected_arrival_time.ge(now))
+                    .filter(estimated_calls::expected_arrival_time.le(in_an_hour))
+                    .select((journeys::id, EstimatedCall::as_select(), SimpleQuay::as_select(), Route::as_select()))
+                    .order(estimated_calls::expected_arrival_time.asc())
+                    .load::<(i32, EstimatedCall, SimpleQuay, Route)>(&mut connection)
+                    .await
+            } else {
+                Err(diesel::result::Error::NotFound)
+            }
         })
     });
 
     let results: Vec<_> = futures::future::join_all(tasks)
         .await
         .into_iter()
+        .flatten()
         .filter_map(|result| result.ok())
         .flatten()
         .collect();
 
     let mut results = results
         .into_iter()
-        .flatten()
         .map(|tuple| FavoriteResult {
             journey_id: tuple.0,
             route: tuple.3,
@@ -106,5 +113,5 @@ pub async fn list(
         a.estimated_call.expected_arrival_time.cmp(&b.estimated_call.expected_arrival_time)
     });
 
-    Json(results)
+    Ok(Json(results))
 }

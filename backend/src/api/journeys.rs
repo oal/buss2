@@ -1,7 +1,7 @@
 use axum::extract::{Path, Query, State};
 use axum::Json;
 use axum::response::IntoResponse;
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Duration, Utc};
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 use serde::{Serialize, Deserialize};
@@ -141,7 +141,7 @@ pub async fn show(
 
 #[derive(Deserialize)]
 pub struct FavoritesQuery {
-    ids: String
+    ids: String,
 }
 
 #[derive(Serialize)]
@@ -156,13 +156,13 @@ impl FavoritesQuery {
             .split(',')
             .filter_map(|route| {
                 let mut parts = route.split('|');
-                let route = parts.next();
                 let quay = parts.next();
+                let route = parts.next();
                 if let (Some(route), Some(quay)) = (route, quay) {
                     let route = route.parse::<i32>().ok();
                     let quay = quay.parse::<i32>().ok();
                     if let (Some(route), Some(quay)) = (route, quay) {
-                        Some(FavoritePair {route, quay})
+                        Some(FavoritePair { route, quay })
                     } else {
                         None
                     }
@@ -175,26 +175,56 @@ impl FavoritesQuery {
     }
 }
 
+#[derive(Serialize)]
+struct FavoriteResult {
+    route: Route,
+    quay: Quay,
+    estimated_call: EstimatedCall,
+}
+
 pub async fn favorites(
     State(pool): State<DbPool>,
     Query(params): Query<FavoritesQuery>,
 ) -> impl IntoResponse {
-    // let mut connection = pool.get().await.unwrap();
+    let mut connection = pool.get().await.unwrap();
 
-    let pairs = params.route_quay_pairs().unwrap();
+    let mut pairs = params.route_quay_pairs().unwrap();
 
-    // use crate::schema::journeys;
-    // use crate::schema::routes;
-    // let departures = journeys::table
-    //     .inner_join(routes::table)
-    //     .inner_join(estimated_calls::table)
-    //     .select((journeys::id, Route::as_select(), EstimatedCall::as_select()))
-    //     .filter(estimated_calls::quay_id.eq(1))
-    //     .filter(estimated_calls::expected_arrival_time.ge(Utc::now()))
-    //     .order(estimated_calls::expected_arrival_time.asc())
-    //     .load::<Departure>(&mut connection)
-    //     .await
-    //     .unwrap();
+    use crate::schema::journeys;
+    use crate::schema::estimated_calls;
+    use crate::schema::routes;
+    let now = Utc::now();
+    let in_an_hour = now + Duration::hours(1);
 
-    Json(pairs)
+    let mut results = Vec::new();
+    for pair in pairs {
+        let favorite = estimated_calls::table
+            .inner_join(journeys::table.inner_join(routes::table))
+            .inner_join(quays::table)
+            .filter(journeys::route_id.eq(pair.route).and(estimated_calls::quay_id.eq(pair.quay)))
+            .filter(estimated_calls::expected_arrival_time.ge(now))
+            .filter(estimated_calls::expected_arrival_time.le(in_an_hour))
+            .select((EstimatedCall::as_select(), Quay::as_select(), Route::as_select()))
+            .order(estimated_calls::expected_arrival_time.asc())
+            .load::<(EstimatedCall, Quay, Route)>(&mut connection)
+            .await
+            .unwrap();
+        results.push(favorite);
+    }
+
+    let mut results = results
+        .into_iter()
+        .flatten()
+        .map(|tuple| FavoriteResult {
+            route: tuple.2,
+            quay: tuple.1,
+            estimated_call: tuple.0,
+        })
+        .collect::<Vec<_>>();
+
+    results.sort_by(|a, b| {
+        a.estimated_call.expected_arrival_time.cmp(&b.estimated_call.expected_arrival_time)
+    });
+
+    Json(results)
 }

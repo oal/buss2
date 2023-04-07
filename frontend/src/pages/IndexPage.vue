@@ -1,17 +1,21 @@
 <template>
-  <q-page>
-    <q-list>
-      <DepartureItem
-        :estimated-call="favorite.estimated_call"
-        :route="favorite.route"
-        :quay="favorite.quay"
-        v-for="favorite in favorites"
-        :key="favorite.id"
-        @click="onFavoriteClick(favorite)"
-      >
-        {{ favorite }}
-      </DepartureItem>
-    </q-list>
+  <q-page class="inner-scroll-page">
+    <q-scroll-area>
+      <q-pull-to-refresh @refresh="onRefresh">
+        <q-list>
+          <DepartureItem
+            :estimated-call="favorite.estimated_call"
+            :route="favorite.route"
+            :quay="favorite.quay"
+            v-for="favorite in favorites"
+            :key="favorite.id"
+            @click="onFavoriteClick(favorite)"
+          >
+            {{ favorite }}
+          </DepartureItem>
+        </q-list>
+      </q-pull-to-refresh>
+    </q-scroll-area>
   </q-page>
 </template>
 
@@ -51,6 +55,10 @@ export default defineComponent({
         },
       });
       this.favorites = response.data;
+    },
+    async onRefresh(done: () => void) {
+      await this.loadData();
+      done();
     },
     onFavoriteClick(favorite: any) {
       this.$router.push({

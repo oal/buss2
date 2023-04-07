@@ -1,1 +1,16 @@
 // app global css in SCSS form
+.inner-scroll-page {
+  display: flex;
+  flex-direction: column;
+}
+.inner-scroll-page {
+  .q-scrollarea {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+
+    .q-scrollarea__container {
+      flex-grow: 1;
+    }
+  }
+}

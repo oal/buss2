@@ -1,5 +1,5 @@
 <template>
-  <q-page class="journey-page">
+  <q-page class="inner-scroll-page">
     <q-banner
       class="bg-secondary text-white q-py-md"
       v-if="journey && !hasStarted"
@@ -13,16 +13,22 @@
       />
     </div>
     <q-scroll-area class="journey-timeline">
-      <q-timeline ref="timeline" class="journey-timeline__list q-px-md">
-        <template v-if="journey">
-          <JourneyTimelineEntry
-            :estimated-call="call"
-            v-for="call in journey.estimated_calls"
-            :key="call.id"
-          />
-        </template>
-      </q-timeline>
+      <q-pull-to-refresh @refresh="onRefresh">
+        <q-timeline ref="timeline" class="journey-timeline__list q-px-md">
+          <template v-if="journey">
+            <JourneyTimelineEntry
+              :estimated-call="call"
+              v-for="call in journey.estimated_calls"
+              :key="call.id"
+            />
+          </template>
+        </q-timeline>
+      </q-pull-to-refresh>
     </q-scroll-area>
+    <q-separator />
+    <q-footer class="bg-grey-2 q-pa-xs text-black">
+      <q-toggle v-model="autoScroll"> Automatisk rulling </q-toggle>
+    </q-footer>
   </q-page>
 </template>
 
@@ -56,11 +62,13 @@ export default defineComponent({
   data() {
     return {
       journey: null as Journey | null,
+      autoScroll: true,
     };
   },
   watch: {
     journey() {
       setTimeout(() => {
+        if (!this.autoScroll) return;
         this.scrollToCurrent();
       }, 500);
     },
@@ -75,6 +83,10 @@ export default defineComponent({
         .catch((error) => {
           console.log(error);
         });
+    },
+    async onRefresh(done: () => void) {
+      await this.loadData();
+      done();
     },
     async scrollToCurrent() {
       await nextTick();
@@ -119,19 +131,4 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss">
-.journey-page {
-  display: flex;
-  flex-direction: column;
-}
-.journey-timeline {
-  overflow-y: scroll;
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-
-  .q-scrollarea__container {
-    flex-grow: 1;
-  }
-}
-</style>
+<style lang="scss"></style>

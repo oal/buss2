@@ -1,7 +1,6 @@
 <template>
-  <q-page>
+  <q-page class="inner-scroll-page">
     <q-list v-if="quay">
-      <q-item-label header>Neste busser</q-item-label>
       <q-separator />
       <q-btn-dropdown class="q-py-sm route-select" flat persistent align="left">
         <template v-slot:label>
@@ -30,16 +29,22 @@
       </q-btn-dropdown>
 
       <q-separator />
-      <DepartureItem
-        :estimated-call="departure.estimated_call"
-        :route="departure.route"
-        v-for="departure in nextDepartures"
-        :key="departure.id"
-        :is-favorite="Boolean(favoriteRoutes[departure.route.id])"
-        @toggle:favorite="toggleFavorite(departure.route.id)"
-        @click="onDepartureClick(departure)"
-      ></DepartureItem>
     </q-list>
+    <q-scroll-area>
+      <q-pull-to-refresh @refresh="onRefresh">
+        <q-list>
+          <DepartureItem
+            :estimated-call="departure.estimated_call"
+            :route="departure.route"
+            v-for="departure in nextDepartures"
+            :key="departure.id"
+            :is-favorite="Boolean(favoriteRoutes[departure.route.id])"
+            @toggle:favorite="toggleFavorite(departure.route.id)"
+            @click="onDepartureClick(departure)"
+          ></DepartureItem>
+        </q-list>
+      </q-pull-to-refresh>
+    </q-scroll-area>
   </q-page>
 </template>
 
@@ -140,6 +145,10 @@ export default defineComponent({
           quayId: this.quay.id,
         });
       }
+    },
+    async onRefresh(done: () => void) {
+      await this.loadDepartures();
+      done();
     },
   },
 

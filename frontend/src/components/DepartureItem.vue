@@ -123,7 +123,10 @@ export default defineComponent({
   font-weight: bold;
 }
 
-.departure-item__route-tag .q-chip__content {
-  justify-content: center;
+.departure-item__route-tag {
+  margin: 0 0.5rem 0 0;
+  .q-chip__content {
+    justify-content: center;
+  }
 }
 </style>

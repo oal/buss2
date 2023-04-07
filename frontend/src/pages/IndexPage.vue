@@ -3,10 +3,11 @@
     <q-list>
       <DepartureItem
         :estimated-call="favorite.estimated_call"
-        :quay-id="favorite.quay.id"
         :route="favorite.route"
+        :quay="favorite.quay"
         v-for="favorite in favorites"
         :key="favorite.id"
+        @click="onFavoriteClick(favorite)"
       >
         {{ favorite }}
       </DepartureItem>
@@ -18,13 +19,19 @@
 import { defineComponent } from 'vue';
 import db from '../db';
 import DepartureItem from '../components/DepartureItem.vue';
+import { useAppStore } from '../stores/app-store';
 
 export default defineComponent({
   name: 'IndexPage',
   components: { DepartureItem },
-
+  setup() {
+    return {
+      store: useAppStore(),
+    };
+  },
   async created() {
     this.$q.loading.show();
+    this.store.setAppTitle('Buss');
     await this.loadData();
     this.$q.loading.hide();
   },
@@ -44,6 +51,13 @@ export default defineComponent({
         },
       });
       this.favorites = response.data;
+    },
+    onFavoriteClick(favorite: any) {
+      this.$router.push({
+        name: 'Journey',
+        params: { id: favorite.journey_id },
+        query: { quay: favorite.quay.id },
+      });
     },
   },
 });

@@ -16,9 +16,10 @@
 
     <q-drawer v-model="leftDrawerOpen" show-if-above bordered>
       <q-list>
-        <q-item-label header> Essential Links </q-item-label>
+        <q-item-label header> Navigasjon </q-item-label>
 
         <MenuItem
+          :exact="link.to?.name === 'Index'"
           v-for="link in essentialLinks"
           :key="link.title"
           v-bind="link"
@@ -38,6 +39,12 @@ import MenuItem from 'components/MenuItem.vue';
 import { useAppStore } from 'stores/app-store';
 
 const linksList = [
+  {
+    title: 'Favoritter',
+    caption: 'Lagrede stopp & ruter',
+    icon: 'departure_board',
+    to: { name: 'Index' },
+  },
   {
     title: 'Søk',
     caption: 'Finn busstopp',

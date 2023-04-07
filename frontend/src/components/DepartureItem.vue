@@ -1,13 +1,21 @@
 <template>
-  <q-item clickable v-ripple @click="onClick">
-    <q-item-section avatar>
-      <q-avatar :style="busColorStyle(route.short_name)">
+  <q-item class="departure-item" clickable v-ripple @click="$emit('click')">
+    <q-item-section class="departure-item__route">
+      <q-chip
+        class="departure-item__route-tag"
+        :style="busColorStyle(route.short_name)"
+      >
         {{ route.short_name }}
-      </q-avatar>
+      </q-chip>
     </q-item-section>
 
     <q-item-section>
-      <q-item-label lines="1"> Om {{ timeUntilDeparture }} </q-item-label>
+      <q-item-label lines="1">
+        <template v-if="quay">
+          {{ quay.name }}
+        </template>
+        om {{ timeUntilDeparture }}
+      </q-item-label>
       <q-item-label caption lines="2">
         <FormattedDelay :estimated-call="estimatedCall" />
         {{ formattedDepartureTime }}
@@ -35,20 +43,18 @@ import { busColorStyle, parseTimeOrNull } from '../helpers';
 import { EstimatedCall } from 'types/EstimatedCall';
 import { Route } from 'types/Route';
 import FormattedDelay from './FormattedDelay.vue';
+import { Quay } from 'types/Quay';
 
 export default defineComponent({
   name: 'DepartureItem',
   components: { FormattedDelay },
   props: {
-    journeyId: {
-      type: Number,
-    },
-    quayId: {
-      type: Number,
-    },
     isFavorite: {
       type: Boolean,
       default: undefined,
+    },
+    quay: {
+      type: Object as PropType<Quay>,
     },
     estimatedCall: {
       type: Object as PropType<EstimatedCall>,
@@ -72,14 +78,6 @@ export default defineComponent({
   },
 
   methods: {
-    onClick() {
-      if (!this.quayId || !this.journeyId) return;
-      this.$router.push({
-        name: 'Journey',
-        params: { id: this.journeyId },
-        query: { quay: this.quayId },
-      });
-    },
     onToggleFavorite() {
       this.favoriteSaving = true;
       setTimeout(() => {
@@ -114,4 +112,18 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss">
+.departure-item {
+}
+
+.departure-item__route {
+  flex-grow: 0;
+  flex-basis: 3.5rem;
+  flex-shrink: 1;
+  font-weight: bold;
+}
+
+.departure-item__route-tag .q-chip__content {
+  justify-content: center;
+}
+</style>

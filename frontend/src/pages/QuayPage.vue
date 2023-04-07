@@ -31,14 +31,13 @@
 
       <q-separator />
       <DepartureItem
-        :journey-id="departure.id"
         :estimated-call="departure.estimated_call"
         :route="departure.route"
         v-for="departure in nextDepartures"
         :key="departure.id"
-        :quay-id="quay.id"
         :is-favorite="Boolean(favoriteRoutes[departure.route.id])"
         @toggle:favorite="toggleFavorite(departure.route.id)"
+        @click="onDepartureClick(departure)"
       ></DepartureItem>
     </q-list>
   </q-page>
@@ -117,6 +116,16 @@ export default defineComponent({
             {}
           );
         });
+    },
+
+    onDepartureClick(departure: any) {
+      if (!this.quay) return;
+
+      this.$router.push({
+        name: 'Journey',
+        params: { id: departure.id },
+        query: { quay: this.quay.id },
+      });
     },
     async toggleFavorite(routeId: number) {
       if (!this.quay) return;

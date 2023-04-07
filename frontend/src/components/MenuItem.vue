@@ -1,7 +1,9 @@
 <template>
-  <q-item clickable :to="to">
+  <q-item clickable :to="to" :exact="exact">
     <q-item-section v-if="icon" avatar>
-      <q-icon :name="icon" />
+      <q-avatar>
+        <q-icon size="md" :name="icon" />
+      </q-avatar>
     </q-item-section>
 
     <q-item-section>
@@ -34,6 +36,11 @@ export default defineComponent({
     icon: {
       type: String,
       default: '',
+    },
+
+    exact: {
+      type: Boolean,
+      default: false,
     },
   },
 });

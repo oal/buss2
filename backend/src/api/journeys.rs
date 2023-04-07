@@ -177,6 +177,7 @@ impl FavoritesQuery {
 
 #[derive(Serialize)]
 struct FavoriteResult {
+    journey_id: i32,
     route: Route,
     quay: Quay,
     estimated_call: EstimatedCall,
@@ -204,9 +205,9 @@ pub async fn favorites(
             .filter(journeys::route_id.eq(pair.route).and(estimated_calls::quay_id.eq(pair.quay)))
             .filter(estimated_calls::expected_arrival_time.ge(now))
             .filter(estimated_calls::expected_arrival_time.le(in_an_hour))
-            .select((EstimatedCall::as_select(), Quay::as_select(), Route::as_select()))
+            .select((journeys::id, EstimatedCall::as_select(), Quay::as_select(), Route::as_select()))
             .order(estimated_calls::expected_arrival_time.asc())
-            .load::<(EstimatedCall, Quay, Route)>(&mut connection)
+            .load::<(i32, EstimatedCall, Quay, Route)>(&mut connection)
             .await
             .unwrap();
         results.push(favorite);
@@ -216,9 +217,10 @@ pub async fn favorites(
         .into_iter()
         .flatten()
         .map(|tuple| FavoriteResult {
-            route: tuple.2,
-            quay: tuple.1,
-            estimated_call: tuple.0,
+            journey_id: tuple.0,
+            route: tuple.3,
+            quay: tuple.2,
+            estimated_call: tuple.1,
         })
         .collect::<Vec<_>>();
 

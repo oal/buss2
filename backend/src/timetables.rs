@@ -2,6 +2,8 @@ use std::time::Instant;
 use chrono::{DateTime, Utc};
 use diesel_async::{RunQueryDsl};
 use anyhow::Result;
+use diesel::prelude::*;
+use diesel::upsert::excluded;
 use serde::{Deserialize, Serialize};
 use tokio::task;
 use crate::db::{DbPool};
@@ -51,15 +53,10 @@ async fn insert_journeys(siri: Siri, pool: DbPool) {
 
 async fn insert_journey(journey: &EstimatedVehicleJourney, pool: DbPool) -> Result<i32> {
     use crate::schema::journeys::dsl::*;
-    // let first_call_date = journey.estimated_calls.estimated_call[0].aimed_departure_time.clone()
-    //     .unwrap_or("".to_string())
-    //     .split("T")
-    //     .next()
-    //     .unwrap_or(&"".to_string()).to_string();
     let journey_ref_str = &journey.dated_vehicle_journey_ref;
     let journey = NewJourney {
         route_id: get_last_as_i32(&journey.line_ref),
-        journey_ref: journey_ref_str.to_string(), //format!("{}|{}", journey_ref_str.to_string(), first_call_date),
+        journey_ref: journey_ref_str.to_string(),
         direction: if journey.direction_ref == "Outbound" {
             Direction::Outbound
         } else {
@@ -81,11 +78,11 @@ async fn insert_journey(journey: &EstimatedVehicleJourney, pool: DbPool) -> Resu
 }
 
 
-async fn insert_estimated_calls(internal_id: i32, calls: &Vec<EstimatedCall>, pool: DbPool) {
+async fn insert_estimated_calls(internal_id: i32, calls: &[EstimatedCall], pool: DbPool) {
     let mut connection = pool.get().await.unwrap();
     use crate::schema::estimated_calls::dsl::*;
-    for call in calls {
-        let estimated_call = NewEstimatedCall {
+    let calls = calls.iter().map(|call| {
+        NewEstimatedCall {
             journey_id: internal_id,
             order_in_journey: call.order.parse().unwrap(),
 
@@ -96,17 +93,22 @@ async fn insert_estimated_calls(internal_id: i32, calls: &Vec<EstimatedCall>, po
 
             expected_arrival_time: parse_time(&call.expected_arrival_time),
             expected_departure_time: parse_time(&call.expected_departure_time),
-        };
+        }
+    }).collect::<Vec<_>>();
 
-        diesel::insert_into(estimated_calls)
-            .values(&estimated_call)
-            .on_conflict((journey_id, order_in_journey))
-            .do_update()
-            .set(&estimated_call)
-            .execute(&mut connection)
-            .await
-            .expect("Error saving stop.");
-    }
+    diesel::insert_into(estimated_calls)
+        .values(calls)
+        .on_conflict((journey_id, order_in_journey))
+        .do_update()
+        .set((
+            target_arrival_time.eq(excluded(target_arrival_time)),
+            target_departure_time.eq(excluded(target_departure_time)),
+            expected_arrival_time.eq(excluded(expected_arrival_time)),
+            expected_departure_time.eq(excluded(expected_departure_time))
+        ))
+        .execute(&mut connection)
+        .await
+        .expect("Error saving stop.");
 }
 
 fn parse_time(time: &Option<String>) -> Option<DateTime<Utc>> {

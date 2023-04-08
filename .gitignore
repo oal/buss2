@@ -2,3 +2,4 @@
 /backend/bindings
 *.iml
 /.idea
+/.env

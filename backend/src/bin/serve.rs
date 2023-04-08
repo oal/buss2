@@ -1,3 +1,4 @@
+use std::env;
 use std::net::SocketAddr;
 use std::time::Duration;
 use axum::Router;
@@ -23,7 +24,8 @@ async fn main() {
         .nest("/api", buss2::api::api_router(pool.clone()).await);
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
 
-    // sync_timetables_forever(pool);
+    let requestor_id = env::var("ENTUR_SESSION").expect("ENTUR_SESSION must be set");
+    sync_timetables_forever(pool, requestor_id);
 
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
@@ -42,11 +44,11 @@ async fn index() -> &'static str {
     "Hello, World!"
 }
 
-fn sync_timetables_forever(pool: DbPool) {
+fn sync_timetables_forever(pool: DbPool, requestor_id: String) {
     task::spawn(async move {
         loop {
             let now = std::time::Instant::now();
-            sync_timetables("1828b7c2-fcc8-47f4-b6cc-541e0015a8d4", pool.clone()).await;
+            sync_timetables(&requestor_id, pool.clone()).await;
             println!("Synced timetables in {} ms.", now.elapsed().as_millis());
             sleep(Duration::from_secs(60)).await;
         }

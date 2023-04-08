@@ -100,7 +100,7 @@ module.exports = configure(function (/* ctx */) {
       open: false, // opens browser window automatically
       proxy: {
         '/api': {
-          target: 'http://127.0.0.1:3000',
+          target: 'http://127.0.0.1:3055',
           changeOrigin: true,
         },
       },

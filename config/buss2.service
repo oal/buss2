@@ -1,19 +1,17 @@
 [Unit]
 Description=buss2 daemon
-Requires=buss2.socket
 After=network.target
 
 [Service]
-Type=notify
+Type=simple
 User=olav
 Group=olav
 ProtectHome=read-only
 ReadWritePaths=/home/olav/projects/buss2/
 WorkingDirectory=/home/olav/projects/buss2/
 ExecStart=/home/olav/projects/buss2/serve
-ExecReload=/bin/kill -s HUP $MAINPID
-KillMode=mixed
-TimeoutStopSec=5
+Restart=always
+RestartSec=10
 
 [Install]
 WantedBy=multi-user.target

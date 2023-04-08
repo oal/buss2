@@ -1,9 +1,0 @@
-[Unit]
-Description=buss2 socket
-
-[Socket]
-ListenStream=/run/buss2.sock
-User=caddy
-
-[Install]
-WantedBy=sockets.target

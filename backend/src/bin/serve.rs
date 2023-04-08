@@ -20,7 +20,7 @@ async fn main() {
     let app = Router::new()
         .route("/", get(index))
         .nest("/api", buss2::api::api_router(pool.clone()).await);
-    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+    let addr = SocketAddr::from(([127, 0, 0, 1], 3055));
 
     let requestor_id = env::var("ENTUR_SESSION").expect("ENTUR_SESSION must be set");
     sync_timetables_forever(pool, requestor_id);

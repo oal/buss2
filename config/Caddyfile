@@ -1,12 +1,8 @@
 buss.olav.it {
-    redir https://buss.olav.it{uri}
-}
-
-buss.olav.it {
     route {
         root * /home/olav/projects/buss2/dist/spa/
+        reverse_proxy /api/* localhost:3055
         file_server
-        reverse_proxy /api/* unix//run/buss2.sock
     }
     encode zstd gzip
 }

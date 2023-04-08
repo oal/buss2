@@ -8,3 +8,21 @@ The official AKT app is often slow, and loses track of favorite routes from time
 
 ### How
 The backend is written in Rust, using the Axum web framework, and Diesel ORM (with Postgres). The frontend is written in Vue 3, using Quasar.
+
+### Deployment
+This is set up to run with Caddy as a reverse proxy, and systemd to manage the service. 
+
+If this is the first project:
+```
+mkdir /etc/caddy/sites-enabled
+echo "import sites-enabled/*.caddy" >> /etc/caddy/Caddyfile
+```
+
+Then:
+```
+sudo ln -s "$(pwd)/config/Caddyfile" /etc/caddy/sites-enabled/buss2.caddy
+sudo ln -s "$(pwd)/config/buss2.socket" /etc/systemd/system/
+sudo ln -s "$(pwd)/config/buss2.service" /etc/systemd/system/
+sudo systemctl enable --now buss2.socket
+sudo systemctl enable --now buss2.service
+```

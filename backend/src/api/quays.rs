@@ -6,7 +6,6 @@ use axum::http::StatusCode;
 use axum::Json;
 use axum::response::IntoResponse;
 use chrono::{Utc};
-use diesel::query_dsl::methods::DistinctOnDsl;
 use serde::Serialize;
 use ts_rs::TS;
 use crate::db::{DbConnection, DbPool};

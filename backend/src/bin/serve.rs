@@ -3,19 +3,20 @@ use std::net::SocketAddr;
 use std::time::Duration;
 use axum::Router;
 use axum::routing::get;
+use diesel::{Connection, PgConnection};
 use dotenvy::dotenv;
 use tokio::task;
 use tokio::time::sleep;
+use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 use buss2::db::{create_db_pool, DbPool};
 use buss2::timetables::sync_timetables;
 
+pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!();
 
 #[tokio::main]
 async fn main() {
     dotenv().ok();
-
-    // let app_state = AppState {
-    // };
+    run_migrations();
 
     let pool = create_db_pool().await;
 
@@ -33,15 +34,16 @@ async fn main() {
         .unwrap();
 }
 
-async fn index() -> &'static str {
-    // let mut connection = buss2::db::establish_connection();
-    // let quay_id = diesel::select(quays::id)
-    //     .from(quays::table)
-    //     .first::<i32>(&mut connection)
-    //     .unwrap();
+fn run_migrations() {
+    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    let mut connection = PgConnection::establish(&database_url)
+        .unwrap_or_else(|_| panic!("Error connecting to {}", database_url));
 
-    // &format!("Hello, World! {quay_id}")
-    "Hello, World!"
+    connection.run_pending_migrations(MIGRATIONS).unwrap();
+}
+
+async fn index() -> &'static str {
+    ""
 }
 
 fn sync_timetables_forever(pool: DbPool, requestor_id: String) {

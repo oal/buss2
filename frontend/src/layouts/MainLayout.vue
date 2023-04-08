@@ -34,14 +34,14 @@
           <q-btn-group outline>
             <q-btn
               :outline="$route.name !== 'Index'"
-              color="primary"
+              color="secondary"
               label="Favoritter"
               icon="favorite"
               :to="{ name: 'Index' }"
             />
             <q-btn
               :outline="$route.name !== 'Search'"
-              color="primary"
+              color="secondary"
               label="Søk"
               icon="search"
               :to="{ name: 'Search' }"

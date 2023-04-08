@@ -27,7 +27,9 @@
     </q-scroll-area>
     <q-separator />
     <div class="bg-grey-2 q-pa-xs text-black">
-      <q-toggle v-model="autoScroll"> Automatisk rulling </q-toggle>
+      <q-toggle v-model="autoScroll" color="accent">
+        Automatisk rulling
+      </q-toggle>
     </div>
   </q-page>
 </template>

@@ -26,9 +26,9 @@
       </q-pull-to-refresh>
     </q-scroll-area>
     <q-separator />
-    <q-footer class="bg-grey-2 q-pa-xs text-black">
+    <div class="bg-grey-2 q-pa-xs text-black">
       <q-toggle v-model="autoScroll"> Automatisk rulling </q-toggle>
-    </q-footer>
+    </div>
   </q-page>
 </template>
 

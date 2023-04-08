@@ -19,9 +19,9 @@
         <q-item-label header> Navigasjon </q-item-label>
 
         <MenuItem
-          :exact="link.to?.name === 'Index'"
           v-for="link in essentialLinks"
           :key="link.title"
+          :exact="link.to?.name === 'Index'"
           v-bind="link"
         />
       </q-list>
@@ -29,6 +29,26 @@
 
     <q-page-container>
       <router-view />
+      <q-footer class="bg-grey-3 q-pa-sm">
+        <div class="flex justify-center">
+          <q-btn-group outline>
+            <q-btn
+              :outline="$route.name !== 'Index'"
+              color="primary"
+              label="Favoritter"
+              icon="favorite"
+              :to="{ name: 'Index' }"
+            />
+            <q-btn
+              :outline="$route.name !== 'Search'"
+              color="primary"
+              label="Søk"
+              icon="search"
+              :to="{ name: 'Search' }"
+            />
+          </q-btn-group>
+        </div>
+      </q-footer>
     </q-page-container>
   </q-layout>
 </template>

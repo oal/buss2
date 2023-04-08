@@ -1,15 +1,22 @@
+use std::io::Cursor;
 use csv::Reader;
 use diesel::prelude::*;
 use diesel::upsert::excluded;
 use dotenvy::dotenv;
 use diesel_async::{RunQueryDsl};
-use buss2::db::{create_db_pool, DbPool};
+use buss2::db::{create_db_pool, DbPool, run_migrations};
 use buss2::helpers::get_last_as_i32;
 use buss2::models::{Quay, Route, Stop};
+
+const GTFS_DIR: &str = "/tmp/gtfs";
 
 #[tokio::main]
 async fn main() {
     dotenv().ok();
+    run_migrations();
+
+    download_gtfs().await.unwrap();
+
     let pool = create_db_pool().await;
 
     println!("Import");
@@ -18,13 +25,40 @@ async fn main() {
     import_routes(pool).await;
 }
 
+async fn download_gtfs() -> anyhow::Result<()> {
+    std::fs::create_dir_all(GTFS_DIR)?;
+
+    // TODO: Use command line argument for file URL.
+    let url = "https://storage.googleapis.com/marduk-production/outbound/gtfs/rb_akt-aggregated-gtfs.zip";
+    let file_name = format!("{GTFS_DIR}/gtfs.zip");
+
+    println!("Downloading GTFS...");
+    let response = reqwest::get(url).await?;
+    let mut file = std::fs::File::create(&file_name)?;
+    let mut content = Cursor::new(response.bytes().await?);
+    std::io::copy(&mut content, &mut file)?;
+    println!("Downloaded GTFS");
+
+    println!("Unzipping GTFS...");
+    let mut archive = zip::ZipArchive::new(std::fs::File::open(file_name)?)?;
+    for i in 0..archive.len() {
+        let mut file = archive.by_index(i)?;
+        let gtfs_file = file.mangled_name();
+        let out_path = format!("{GTFS_DIR}/{}", gtfs_file.to_str().unwrap());
+        let mut out_file = std::fs::File::create(&out_path)?;
+        std::io::copy(&mut file, &mut out_file)?;
+    }
+    println!("Unzipped GTFS");
+    Ok(())
+}
+
 fn read_stops_file() -> Reader<std::fs::File> {
-    let dir = "/home/olav/Downloads/rb_akt-aggregated-gtfs(1)/stops.txt";
+    let dir = "/tmp/gtfs/stops.txt";
     Reader::from_path(dir).unwrap()
 }
 
 fn read_routes_file() -> Reader<std::fs::File> {
-    let dir = "/home/olav/Downloads/rb_akt-aggregated-gtfs(1)/routes.txt";
+    let dir = "/tmp/gtfs/routes.txt";
     Reader::from_path(dir).unwrap()
 }
 

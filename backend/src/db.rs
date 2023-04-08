@@ -1,18 +1,23 @@
 use std::env;
+use diesel::{Connection, PgConnection};
 use diesel_async::pooled_connection::AsyncDieselConnectionManager;
 use diesel_async::pooled_connection::deadpool::{Pool};
+use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 
-// pub fn create_db_pool() -> Pool {
-//     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-//     let manager = Manager::new(&database_url, Runtime::Tokio1);
-//     let pool = Pool::builder(manager)
-//         .max_size(8)
-//         .build()
-//         .unwrap();
-//     pool
-// }
 pub type DbPool = Pool<diesel_async::AsyncPgConnection>;
 pub type DbConnection = diesel_async::AsyncPgConnection;
+
+pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!();
+
+pub fn run_migrations() {
+    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    let mut connection = PgConnection::establish(&database_url)
+        .unwrap_or_else(|_| panic!("Error connecting to {}", database_url));
+
+    println!("Running migrations...");
+    connection.run_pending_migrations(MIGRATIONS).unwrap();
+    println!("Migrations done.");
+}
 
 pub async fn create_db_pool() -> DbPool {
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
@@ -21,7 +26,3 @@ pub async fn create_db_pool() -> DbPool {
     Pool::builder(config).build().unwrap()
 }
 
-// #[derive(Clone)]
-// pub struct AppState {
-//     pub pool: DbPool,
-// }

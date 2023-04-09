@@ -42,7 +42,7 @@ fn sync_timetables_forever(pool: DbPool, requestor_id: String) {
             let now = std::time::Instant::now();
             sync_timetables(&requestor_id, pool.clone()).await;
             println!("Synced timetables in {} ms.", now.elapsed().as_millis());
-            sleep(Duration::from_secs(60)).await;
+            sleep(Duration::from_secs(20)).await;
         }
     });
 }

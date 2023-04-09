@@ -38,7 +38,12 @@ async fn load_estimated_timetables_from_file(_requestor_id: &str) -> String {
 }
 
 async fn insert_journeys(siri: Siri, pool: DbPool) {
-    let raw_journeys = siri.service_delivery.estimated_time_table_delivery.estimated_journey_version_frame.estimated_vehicle_journey;
+    let raw_journeys = siri
+        .service_delivery.estimated_time_table_delivery
+        .estimated_journey_version_frame
+        .estimated_vehicle_journey
+        .unwrap_or(vec![]);
+
     let tasks = raw_journeys.into_iter().map(|journey| {
         let pool = pool.clone();
         task::spawn(async move {
@@ -145,7 +150,7 @@ struct EstimatedTimeTableDelivery {
 #[derive(Debug, Deserialize, Serialize)]
 struct EstimatedJourneyVersionFrame {
     #[serde(rename = "EstimatedVehicleJourney")]
-    estimated_vehicle_journey: Vec<EstimatedVehicleJourney>,
+    estimated_vehicle_journey: Option<Vec<EstimatedVehicleJourney>>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]

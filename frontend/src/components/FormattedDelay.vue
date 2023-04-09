@@ -21,7 +21,10 @@ export default defineComponent({
   },
   computed: {
     targetDepartureTime() {
-      return parseTimeOrNull(this.estimatedCall.expected_departure_time);
+      return parseTimeOrNull(
+        this.estimatedCall.expected_departure_time ??
+          this.estimatedCall.expected_arrival_time
+      );
     },
     showOnTime() {
       return (

@@ -1,13 +1,16 @@
 # Buss2
 
 ### What
-A web app and backend for tracking bus routes and times in Agder, Norway.
+A web app and backend for tracking bus routes and times in Agder, Norway. Currently hosted at https://buss.olav.it/.
 
 ### Why
-The official AKT app is often slow, and loses track of favorite routes from time to time. Also, I needed an excuse to learn more Rust (specifically Axum and Diesel), and noticed bus data was available in a public API from Entur.
+I wanted to learn more Rust (specifically Axum and Diesel), and noticed bus data was available in a public API from Entur.
 
 ### How
 The backend is written in Rust, using the Axum web framework, and Diesel ORM (with Postgres). The frontend is written in Vue 3, using Quasar.
+
+### Current state
+Searching for bus stops, saving favorites, and live timing is working. The backend is not that robust (uses `unwrap()` a lot), and the frontend needs an icon etc. Also, deployment is done by uploading via `scp` for now.
 
 ### Deployment
 #### Build locally
@@ -46,6 +49,5 @@ Then:
 sudo ln -s "$(pwd)/config/Caddyfile" /etc/caddy/sites-enabled/buss2.caddy
 sudo ln -s "$(pwd)/config/buss2.socket" /etc/systemd/system/
 sudo ln -s "$(pwd)/config/buss2.service" /etc/systemd/system/
-sudo systemctl enable --now buss2.socket
 sudo systemctl enable --now buss2.service
 ```

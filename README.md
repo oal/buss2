@@ -13,7 +13,7 @@ The backend is written in Rust, using the Axum web framework, and Diesel ORM (wi
 #### Build locally
 ```
 cd frontend
-quasar build
+quasar build --mode pwa
 
 cd ..
 

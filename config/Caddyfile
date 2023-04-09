@@ -1,6 +1,6 @@
 buss.olav.it {
     route {
-        root * /home/olav/projects/buss2/dist/spa/
+        root * /home/olav/projects/buss2/pwa/
         reverse_proxy /api/* localhost:3055
         file_server
     }

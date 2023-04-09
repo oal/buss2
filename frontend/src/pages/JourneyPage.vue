@@ -4,7 +4,7 @@
       v-if="journey && !hasStarted"
       class="bg-secondary text-white q-py-md"
     >
-      Denne ruten har ikke startet enda. Estimerte tider kan endre seg.
+      {{ $t('journeyNotStarted') }}
     </q-banner>
     <div v-if="previousAndNextStop">
       <StopProgress
@@ -28,7 +28,7 @@
     <q-separator />
     <div class="bg-grey-2 q-pa-xs text-black">
       <q-toggle v-model="autoScroll" color="accent">
-        Automatisk rulling
+        {{ $t('autoScroll') }}
       </q-toggle>
     </div>
   </q-page>

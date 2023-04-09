@@ -1,6 +1,6 @@
 <template>
   <q-page>
-    <StopSearch></StopSearch>
+    <StopSearch />
   </q-page>
 </template>
 
@@ -17,7 +17,7 @@ export default {
     };
   },
   created() {
-    this.store.setAppTitle('Søk');
+    this.store.setAppTitle(this.$t('search'));
   },
 };
 </script>

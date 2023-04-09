@@ -19,7 +19,7 @@
         <q-item-label header> Navigasjon </q-item-label>
 
         <MenuItem
-          v-for="link in essentialLinks"
+          v-for="link in links"
           :key="link.title"
           :exact="link.to?.name === 'Index'"
           v-bind="link"
@@ -35,14 +35,14 @@
             <q-btn
               :outline="$route.name !== 'Index'"
               color="secondary"
-              label="Favoritter"
+              :label="$t('favorites')"
               icon="favorite"
               :to="{ name: 'Index' }"
             />
             <q-btn
               :outline="$route.name !== 'Search'"
               color="secondary"
-              label="Søk"
+              :label="$t('search')"
               icon="search"
               :to="{ name: 'Search' }"
             />
@@ -58,21 +58,6 @@ import { defineComponent, ref } from 'vue';
 import MenuItem from 'components/MenuItem.vue';
 import { useAppStore } from 'stores/app-store';
 
-const linksList = [
-  {
-    title: 'Favoritter',
-    caption: 'Lagrede stopp & ruter',
-    icon: 'departure_board',
-    to: { name: 'Index' },
-  },
-  {
-    title: 'Søk',
-    caption: 'Finn busstopp',
-    icon: 'search',
-    to: { name: 'Search' },
-  },
-];
-
 export default defineComponent({
   name: 'MainLayout',
 
@@ -84,12 +69,30 @@ export default defineComponent({
     const leftDrawerOpen = ref(false);
 
     return {
-      essentialLinks: linksList,
       leftDrawerOpen,
       toggleLeftDrawer() {
         leftDrawerOpen.value = !leftDrawerOpen.value;
       },
       store: useAppStore(),
+    };
+  },
+
+  data() {
+    return {
+      links: [
+        {
+          title: this.$t('favorites'),
+          caption: this.$t('favoritesDescription'),
+          icon: 'departure_board',
+          to: { name: 'Index' },
+        },
+        {
+          title: this.$t('search'),
+          caption: this.$t('searchDescription'),
+          icon: 'search',
+          to: { name: 'Search' },
+        },
+      ],
     };
   },
 });

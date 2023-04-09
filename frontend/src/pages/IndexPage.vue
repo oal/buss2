@@ -1,7 +1,7 @@
 <template>
   <q-page class="inner-scroll-page">
     <p v-if="favorites.length === 0" class="q-pa-md text-center">
-      Ingen favoritter funnet.
+      {{ $t('noFavoritesFound') }}
     </p>
     <q-scroll-area>
       <q-pull-to-refresh @refresh="onRefresh">

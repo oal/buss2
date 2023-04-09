@@ -4,7 +4,7 @@
       v-model="search"
       filled
       debounce="500"
-      label="Søk etter stopp"
+      :label="$t('searchPlaceholder')"
     ></q-input>
     <q-list bordered separator>
       <q-item

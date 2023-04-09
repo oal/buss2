@@ -4,13 +4,13 @@
       <div class="stop-progress__stop">
         <q-icon name="room" size="md" color="primary" />
         <strong>
-          <small>Forrige stopp:</small>
+          <small>{{ $t('stops.previous') }}:</small>
           {{ previous.quay.name }}
         </strong>
       </div>
       <div class="stop-progress__stop">
         <strong>
-          <small>Neste stopp:</small>
+          <small>{{ $t('stops.next') }}:</small>
           {{ next.quay.name }}
         </strong>
         <q-icon name="room" size="md" color="primary" />

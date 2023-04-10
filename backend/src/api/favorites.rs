@@ -9,7 +9,7 @@ use serde::{Serialize, Deserialize};
 use tokio::task;
 use ts_rs::TS;
 use crate::db::DbPool;
-use crate::models::{EstimatedCall, Route, SimpleQuay};
+use crate::models::{Direction, EstimatedCall, Route, SimpleQuay};
 use crate::schema::{estimated_calls, quays};
 
 #[derive(Deserialize)]
@@ -52,6 +52,7 @@ impl FavoritesQuery {
 #[ts(export)]
 struct FavoriteResult {
     journey_id: i32,
+    direction: Direction,
     route: Route,
     quay: SimpleQuay,
     estimated_call: EstimatedCall,
@@ -81,9 +82,9 @@ pub async fn list(
                     .filter(journeys::route_id.eq(pair.route).and(estimated_calls::quay_id.eq(pair.quay)))
                     .filter(estimated_calls::expected_arrival_time.ge(now))
                     .filter(estimated_calls::expected_arrival_time.le(in_an_hour))
-                    .select((journeys::id, EstimatedCall::as_select(), SimpleQuay::as_select(), Route::as_select()))
+                    .select(((journeys::id, journeys::direction), EstimatedCall::as_select(), SimpleQuay::as_select(), Route::as_select()))
                     .order(estimated_calls::expected_arrival_time.asc())
-                    .load::<(i32, EstimatedCall, SimpleQuay, Route)>(&mut connection)
+                    .load::<((i32, Direction), EstimatedCall, SimpleQuay, Route)>(&mut connection)
                     .await
             } else {
                 Err(diesel::result::Error::NotFound)
@@ -102,7 +103,8 @@ pub async fn list(
     let mut results = results
         .into_iter()
         .map(|tuple| FavoriteResult {
-            journey_id: tuple.0,
+            journey_id: tuple.0.0,
+            direction: tuple.0.1,
             route: tuple.3,
             quay: tuple.2,
             estimated_call: tuple.1,

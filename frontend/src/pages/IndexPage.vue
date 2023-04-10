@@ -12,6 +12,7 @@
             :estimated-call="favorite.estimated_call"
             :route="favorite.route"
             :quay="favorite.quay"
+            :direction="favorite.direction"
             @click="onFavoriteClick(favorite)"
           >
             {{ favorite }}

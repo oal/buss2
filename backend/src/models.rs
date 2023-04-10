@@ -47,8 +47,9 @@ pub struct Route {
     pub name: String,
 }
 
-#[derive(diesel_derive_enum::DbEnum, Debug)]
+#[derive(diesel_derive_enum::DbEnum, Serialize, TS, Debug)]
 #[ExistingTypePath = "crate::schema::sql_types::DirectionEnum"]
+#[ts(export)]
 pub enum Direction {
     Outbound,
     Inbound,

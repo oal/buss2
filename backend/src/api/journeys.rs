@@ -7,7 +7,7 @@ use diesel_async::RunQueryDsl;
 use serde::{Serialize, Deserialize};
 use ts_rs::TS;
 use crate::db::DbPool;
-use crate::models::{Route, SimpleQuay};
+use crate::models::{Direction, Route, SimpleQuay};
 use crate::schema::estimated_calls;
 use crate::schema::quays;
 
@@ -46,6 +46,7 @@ struct EstimatedCall {
 #[ts(export)]
 struct Departure {
     id: i32,
+    direction: Direction,
     route: Route,
     estimated_call: EstimatedCall,
 }
@@ -62,7 +63,7 @@ pub async fn list(
     let mut departures_query = journeys::table
         .inner_join(routes::table)
         .inner_join(estimated_calls::table)
-        .select((journeys::id, Route::as_select(), EstimatedCall::as_select()))
+        .select((journeys::id, journeys::direction, Route::as_select(), EstimatedCall::as_select()))
         .filter(estimated_calls::quay_id.eq(params.quay))
         .filter(estimated_calls::expected_arrival_time.ge(now))
         .order(estimated_calls::expected_arrival_time.asc())
@@ -93,6 +94,7 @@ struct EstimatedCallWithQuay {
 #[ts(export)]
 struct Journey {
     id: i32,
+    direction: Direction,
     route: Route,
     estimated_calls: Vec<EstimatedCallWithQuay>,
 }
@@ -103,12 +105,12 @@ pub async fn show(
 ) -> impl IntoResponse {
     let mut connection = pool.get().await.unwrap();
 
-    let (_journey_id, route) = {
+    let (_journey_id, direction, route) = {
         use crate::schema::journeys::dsl::*;
         journeys.find(_id)
             .inner_join(crate::schema::routes::table)
-            .select((id, Route::as_select()))
-            .first::<(i32, Route)>(&mut connection)
+            .select((id, direction, Route::as_select()))
+            .first::<(i32, Direction, Route)>(&mut connection)
             .await
             .unwrap()
     };
@@ -127,6 +129,7 @@ pub async fn show(
 
     Json(Journey {
         id: _journey_id,
+        direction,
         route,
         estimated_calls: calls,
     })

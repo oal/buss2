@@ -5,7 +5,6 @@
       <q-btn-dropdown class="q-py-sm route-select" flat persistent align="left">
         <template #label>
           <span class="q-pr-sm"> Viser </span>
-
           <q-chip
             v-for="route in selectedRouteShortNames"
             :key="route"
@@ -38,6 +37,7 @@
             :key="departure.id"
             :estimated-call="departure.estimated_call"
             :route="departure.route"
+            :direction="departure.direction"
             :is-favorite="Boolean(favoriteRoutes[departure.route.id])"
             @toggle:favorite="toggleFavorite(departure.route.id)"
             @click="onDepartureClick(departure)"

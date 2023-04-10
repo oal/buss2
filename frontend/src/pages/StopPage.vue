@@ -133,9 +133,17 @@ export default defineComponent({
 
 .leaflet-popup-content-wrapper {
   border-radius: 2px;
+  background-color: transparent;
 }
 
 .leaflet-popup-content {
   margin: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .leaflet-tile-container img {
+    filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg)
+      saturate(0.3) brightness(0.7);
+  }
 }
 </style>

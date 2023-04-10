@@ -3,6 +3,7 @@
     <q-item-section class="departure-item__route">
       <q-chip
         class="departure-item__route-tag"
+        :icon-right="direction === 'Outbound' ? 'arrow_forward' : 'arrow_back'"
         :style="busColorStyle(route.short_name)"
       >
         {{ route.short_name }}
@@ -45,6 +46,7 @@ import { Route } from 'types/Route';
 import FormattedDelay from './FormattedDelay.vue';
 import { Quay } from 'types/Quay';
 import { SimpleQuay } from 'types/SimpleQuay';
+import { Direction } from 'types/Direction';
 
 export default defineComponent({
   name: 'DepartureItem',
@@ -65,6 +67,10 @@ export default defineComponent({
     route: {
       type: Object as PropType<Route>,
       required: true,
+    },
+    direction: {
+      type: String as PropType<Direction>,
+      default: 'Outbound',
     },
   },
   emits: ['toggle:favorite', 'click'],
@@ -124,15 +130,34 @@ export default defineComponent({
 
 .departure-item__route {
   flex-grow: 0;
-  flex-basis: 3.5rem;
+  flex-basis: 4rem;
   flex-shrink: 1;
   font-weight: bold;
+  display: flex;
 }
 
 .departure-item__route-tag {
   margin: 0 0.5rem 0 0;
+  padding: 0;
+
   .q-chip__content {
     justify-content: center;
+    padding-left: 0.35rem;
+  }
+
+  .q-icon {
+    background-color: #fff;
+    border-radius: 2rem;
+    font-size: 1.1rem;
+    padding: 0.2rem;
+    margin-right: -0.5rem;
+    margin-left: 0;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .q-icon {
+      background-color: #000;
+    }
   }
 }
 </style>

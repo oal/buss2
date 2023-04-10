@@ -29,11 +29,17 @@
 
     <q-page-container>
       <router-view />
-      <q-footer class="bg-grey-3 q-pa-sm">
+      <q-footer
+        :class="
+          $q.dark.isActive ? 'bg-grey-10 text-white' : 'bg-grey-2 text-black'
+        "
+        class="q-pa-sm"
+      >
         <div class="flex justify-center">
           <q-btn-group outline>
             <q-btn
               :outline="$route.name !== 'Index'"
+              :class="$q.dark.isActive ? 'text-white' : ''"
               color="secondary"
               :label="$t('favorites')"
               icon="favorite"
@@ -41,6 +47,7 @@
             />
             <q-btn
               :outline="$route.name !== 'Search'"
+              :class="$q.dark.isActive ? 'text-white' : ''"
               color="secondary"
               :label="$t('search')"
               icon="search"

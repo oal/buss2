@@ -26,7 +26,12 @@
       </q-pull-to-refresh>
     </q-scroll-area>
     <q-separator />
-    <div class="bg-grey-2 q-pa-xs text-black">
+    <div
+      :class="
+        $q.dark.isActive ? 'bg-grey-10 text-white' : 'bg-grey-2 text-black'
+      "
+      class="q-pa-xs"
+    >
       <q-toggle v-model="autoScroll" color="accent">
         {{ $t('autoScroll') }}
       </q-toggle>

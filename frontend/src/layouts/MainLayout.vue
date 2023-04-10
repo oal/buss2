@@ -1,6 +1,6 @@
 <template>
   <q-layout view="lHh Lpr lFf">
-    <q-header elevated>
+    <q-header :class="$q.dark.isActive ? 'bg-grey-10' : null">
       <q-toolbar>
         <q-btn
           flat
@@ -31,24 +31,22 @@
       <router-view />
       <q-footer
         :class="
-          $q.dark.isActive ? 'bg-grey-10 text-white' : 'bg-grey-2 text-black'
+          $q.dark.isActive ? 'bg-grey-10 text-white' : 'bg-white text-black'
         "
-        class="q-pa-sm"
+        class="app-footer"
       >
         <div class="flex justify-center">
-          <q-btn-group outline>
+          <q-btn-group flat>
             <q-btn
-              :outline="$route.name !== 'Index'"
-              :class="$q.dark.isActive ? 'text-white' : ''"
-              color="secondary"
+              flat
+              :color="$route.name === 'Index' ? 'accent' : ''"
               :label="$t('favorites')"
               icon="favorite"
               :to="{ name: 'Index' }"
             />
             <q-btn
-              :outline="$route.name !== 'Search'"
-              :class="$q.dark.isActive ? 'text-white' : ''"
-              color="secondary"
+              flat
+              :color="$route.name === 'Search' ? 'accent' : ''"
               :label="$t('search')"
               icon="search"
               :to="{ name: 'Search' }"
@@ -104,3 +102,17 @@ export default defineComponent({
   },
 });
 </script>
+
+<style lang="scss">
+.app-footer {
+  .q-btn__content {
+    flex-direction: column;
+    text-transform: none;
+    padding: 0.65rem;
+    line-height: 1.2;
+    .q-icon {
+      margin: 0;
+    }
+  }
+}
+</style>

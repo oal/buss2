@@ -3,7 +3,7 @@
     <q-item-section class="departure-item__route">
       <q-chip
         class="departure-item__route-tag"
-        :icon-right="direction === 'Outbound' ? 'arrow_forward' : 'arrow_back'"
+        :icon-right="direction === 'Outbound' ? 'arrow_back' : 'arrow_forward'"
         :style="busColorStyle(route.short_name)"
       >
         {{ route.short_name }}

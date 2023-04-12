@@ -19,12 +19,29 @@ pub async fn sync_timetables(requestor_id: &str, pool: DbPool) {
     println!("Loaded in {} ms.", now.elapsed().as_millis());
 
     let now = Instant::now();
-    let siri: Siri = serde_xml_rs::from_str(&body).unwrap();
-    println!("Deserialized in {} ms.", now.elapsed().as_millis());
 
-    let now = Instant::now();
-    insert_journeys(siri, pool).await;
-    println!("Inserted in {} ms.", now.elapsed().as_millis());
+    let result = serde_xml_rs::from_str::<Siri>(&body);
+    if let Ok(siri) = result {
+        println!("Deserialized in {} ms.", now.elapsed().as_millis());
+
+        let now = Instant::now();
+        insert_journeys(siri, pool).await;
+        println!("Inserted in {} ms.", now.elapsed().as_millis());
+    } else if let Err(e) = result {
+        let delay = match e {
+            serde_xml_rs::Error::Syntax { source } => {
+                println!("Syntax error: {}", source);
+                60
+            }
+            serde_xml_rs::Error::Io { source } => {
+                println!("IO error: {}", source);
+                30
+            }
+            _ => 90
+        };
+        println!("Failed to deserialize. Waiting {delay} before trying again.");
+        tokio::time::sleep(std::time::Duration::from_secs(delay)).await;
+    };
 }
 
 async fn load_estimated_timetables(requestor_id: &str) -> String {
